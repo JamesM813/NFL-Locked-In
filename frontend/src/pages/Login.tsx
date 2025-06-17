@@ -3,8 +3,19 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { supabase } from '@/lib/supabase'
 
 export default function Login() {
+  
+  // Add this inside a component
+  useEffect(() => {
+    const testConnection = async () => {
+      const { data, error } = await supabase.from('test').select('*')
+      console.log('Supabase connection test:', { data, error })
+    }
+    testConnection()
+  }, [])
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-green-800 p-4">
       <div className="w-full max-w-md">
@@ -13,6 +24,7 @@ export default function Login() {
           <div className="text-6xl mb-4">🏈</div>
           <h1 className="text-3xl font-bold text-white mb-2">NFL Pick 'Em</h1>
           <p className="text-blue-100">Sign in to make your picks</p>
+
         </div>
 
         {/* Login Card */}
@@ -32,7 +44,7 @@ export default function Login() {
               <Input
                 id="email"
                 type="email"
-                placeholder="your.email@example.com"
+                placeholder="email@example.com"
                 className="h-11"
               />
             </div>

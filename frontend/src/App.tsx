@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useState } from 'react'
-import LoginPage from './pages/Login/Login'
+import LoginPage from './pages/Login'
 import './App.css'
 
 function App() {
