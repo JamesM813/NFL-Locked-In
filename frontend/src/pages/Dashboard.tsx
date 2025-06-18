@@ -47,9 +47,6 @@ export default function Dashboard() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/login')
-    // You'll likely want to redirect the user to the login page after logout
-    // For example, using a router library like React Router:
-    // history.push('/login');
   };
 
   if (loading) {
