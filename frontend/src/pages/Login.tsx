@@ -4,18 +4,52 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { supabase } from '@/lib/supabase'
+import { useNavigate } from 'react-router-dom'
 
 export default function Login() {
   
-  // Add this inside a component
-  useEffect(() => {
-    const testConnection = async () => {
-      const { data, error } = await supabase.from('test').select('*')
-      console.log('Supabase connection test:', { data, error })
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const navigate = useNavigate()
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setMessage('')
+
+    try{
+      if(isSignUp){
+        if(password !== confirmPassword){
+          throw new Error("Passwords do not match! Please re-enter and try again.")
+        }
+        const {data, error} = await supabase.auth.signUp({ 
+          email,
+          password
+        })
+        if (error) throw error
+        setMessage('Successfully signed up! Please log in.')
+        setIsSignUp(false)
+      } else {
+        const {data, error} = await supabase.auth.signInWithPassword({
+          email,
+          password
+        })
+        if (error) throw error
+        setMessage('Login in success!')
+        navigate("/dashboard")
+      }
+    } catch (error: any){
+      setMessage(error.message)
+    } finally {
+      setLoading(false)
     }
-    testConnection()
-  }, [])
-  
+  }
+
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-green-800 p-4">
       <div className="w-full max-w-md">
@@ -30,9 +64,9 @@ export default function Login() {
         {/* Login Card */}
         <Card className="backdrop-blur-sm bg-white/95 shadow-2xl border-0">
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
+            <CardTitle className="text-2xl font-bold">{isSignUp ? 'Sign Up' : 'Login'}</CardTitle>
             <CardDescription>
-              Enter your credentials to access your account
+              {isSignUp ? 'Create a new account' : 'Sign in to your account'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -45,7 +79,10 @@ export default function Login() {
                 id="email"
                 type="email"
                 placeholder="email@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="h-11"
+                required
               />
             </div>
 
@@ -57,9 +94,30 @@ export default function Login() {
               <Input
                 id="password"
                 type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 className="h-11"
+                required
               />
+            </div>
+
+            {/* Confirm Password Field */}
+            <div>{isSignUp ? 
+              <div className="space-y-2">
+                <Label htmlFor='confirm-password' className='test-sm font-medium'>
+                  Confirm Password
+                </Label>
+                <Input 
+                  id='confirm-password'
+                  type='password'
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Please confirm your password"
+                  className='h-11'
+                  required
+                  />
+              </div> : (<div></div>)}
             </div>
 
             {/* Forgot Password Link */}
@@ -71,10 +129,13 @@ export default function Login() {
                 Forgot your password?
               </a>
             </div>
-
+            
+            <div>
+              {message}
+            </div>
             {/* Login Button */}
-            <Button className="w-full h-11 text-base font-semibold">
-              Sign In
+            <Button className="w-full h-11 text-base font-semibold" type="submit" disabled={loading} onClick={handleAuth}>
+              {loading ? 'Loading...': (isSignUp ? 'Sign Up' : 'Login')}
             </Button>
 
             {/* Divider */}
@@ -98,32 +159,28 @@ export default function Login() {
                 </svg>
                 Google
               </Button>
+
               <Button variant="outline" className="h-11">
                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  <path d="M16.365 1.43c0 1.14-.44 2.072-1.095 2.843-.768.908-1.773 1.61-2.897 1.509-.077-1.23.395-2.34 1.05-3.094.745-.849 1.934-1.413 2.942-1.258zm5.46 17.72c-.676 1.58-1.49 3.06-2.61 4.358-1.105 1.292-2.49 2.482-4.248 2.487-1.476.005-1.947-.95-3.66-.944-1.713.006-2.22.958-3.692.952-1.757-.005-3.23-1.445-4.335-2.737C2.78 21.374.85 17.493 1.02 13.775c.104-2.257.86-4.565 2.296-6.295 1.47-1.771 3.41-2.838 5.354-2.785 1.267.032 2.468.898 3.66.91 1.165.012 2.27-.902 3.76-.884 1.308.017 2.74.688 3.775 1.856-1.473.923-2.44 2.283-2.342 4.18.108 2.144 1.442 3.414 2.486 4.056-.206.554-.432 1.097-.667 1.633z"/>
                 </svg>
-                Facebook
+                Apple
               </Button>
+
             </div>
           </CardContent>
         </Card>
 
         {/* Sign Up Link */}
         <div className="text-center mt-6">
-          <p className="text-blue-100">
-            Don't have an account?{' '}
-            <a 
-              href="/signup" 
-              className="text-white font-semibold hover:underline"
-            >
-              Sign up here
-            </a>
-          </p>
+          <Button type="button" onClick={() => setIsSignUp(!isSignUp)} className='text-sm text-white hover:underline'>
+            {isSignUp ? 'Already have an account? Login' : "Don't have an account yet? Sign up"}
+          </Button>
         </div>
 
         {/* Footer */}
         <div className="text-center mt-8 text-blue-200 text-sm">
-          <p>© 2024 NFL Pick 'Em. Ready to dominate your league?</p>
+          <p>This project is an independent, personal work and is not affiliated with, endorsed by, or associated with the National Football League (NFL) or any of its teams. All NFL-related names, logos, and trademarks are the property of their respective owners. This project does not use these assets for commercial purposes and is intended for educational and non-commercial use only.</p>
         </div>
       </div>
     </div>
