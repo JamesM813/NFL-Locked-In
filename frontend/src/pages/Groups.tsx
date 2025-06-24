@@ -1,4 +1,6 @@
-export default function Footer() {
+
+
+export default function Groups(){
     return (
         <div>
             

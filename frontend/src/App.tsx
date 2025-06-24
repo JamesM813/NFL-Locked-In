@@ -1,8 +1,10 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { useState } from 'react'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import LoginPage from './pages/Login'
 import DashboardPage from './pages/Dashboard'
 import SchedulePage from './pages/Schedule'
+import ProfilePage from './pages/Profile'
+import GroupsPage from './pages/Groups'
+import ProtectedLayout from './components/ProtectedLayout'
 import ProtectedRoute from './components/ProtectedRoute'
 import RootRedirect from './components/RootRedirect'
 import './App.css'
@@ -16,8 +18,12 @@ function App() {
         <Route path="/" element={<RootRedirect/>}/>
         <Route path="/login" element={<LoginPage/>} />
           <Route element={<ProtectedRoute/>}>
-            <Route path="/dashboard" element={<DashboardPage/>}/>
-            <Route path='/schedule' element={<SchedulePage />}/>
+            <Route element={<ProtectedLayout/>}>
+              <Route path="/dashboard" element={<DashboardPage/>}/>
+              <Route path='/schedule' element={<SchedulePage />}/>
+              <Route path='/groups' element = {<GroupsPage />}/>
+              <Route path='/profile' element={<ProfilePage />}/>
+              </Route>
           </Route>
       </Routes>
     </Router>

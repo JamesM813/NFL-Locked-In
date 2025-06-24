@@ -1,137 +1,121 @@
-// components/Header.tsx
-import React, { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { 
-  User, 
-  Trophy, 
-  Users, 
-  LayoutDashboard, 
-  LogOut, 
-  Menu, 
-  X,
-  ChevronDown 
-} from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { Button } from '@/components/ui/button';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 
 export default function Header() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-  }
+    await supabase.auth.signOut();
+    navigate('/login');
+  };
+
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
 
   const navItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Groups', href: '/groups', icon: Users },
-    { name: 'Profile', href: '/profile', icon: User },
-  ]
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Groups', path: '/groups' },
+    { label: 'Schedule', path: '/schedule' },
+    { label: 'Profile', path: '/profile' }
+  ];
 
   return (
-    <header className="bg-gradient-to-r from-blue-900 via-blue-800 to-green-800 text-white shadow-lg sticky top-0 z-50">
-      <div className="container mx-auto px-4">
+    <header className="backdrop-blur-sm bg-black/20 border-b border-white/10 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo/Brand */}
-          <div className="flex items-center space-x-3">
-            <div className="text-3xl">🏈</div>
-            <div>
-              <h1 className="text-xl font-bold">NFL Pick 'Em</h1>
-              <p className="text-xs text-blue-200 hidden sm:block">Dominate Your League</p>
-            </div>
+          <div className="flex items-center">
+            <h1 className="text-2xl font-bold text-white">
+              NFL Pick 'Em
+            </h1>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-white/10 transition-colors duration-200"
-                >
-                  <Icon size={18} />
-                  <span>{item.name}</span>
-                </a>
-              )
-            })}
+            {navItems.map((item) => (
+              <Button
+                key={item.path}
+                onClick={() => handleNavigation(item.path)}
+                variant="ghost"
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  isActive(item.path)
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'text-gray-300 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                {item.label}
+              </Button>
+            ))}
+            <div className="ml-4 pl-4 border-l border-white/20">
+              <Button
+                onClick={handleSignOut}
+                variant="ghost"
+                className="text-gray-300 hover:text-red-400 hover:bg-red-500/10 font-medium"
+              >
+                Sign Out
+              </Button>
+            </div>
           </nav>
 
-          {/* Desktop Sign Out */}
-          <div className="hidden md:flex items-center space-x-4">
-            <div className="relative">
-              <Button
-                onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                variant="ghost"
-                className="text-white hover:bg-white/10 flex items-center space-x-2"
-              >
-                <User size={18} />
-                <span className="hidden lg:block">Account</span>
-                <ChevronDown size={16} />
-              </Button>
-              
-              {isProfileDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 text-gray-800">
-                  <a href="/profile" className="block px-4 py-2 hover:bg-gray-100">
-                    <div className="flex items-center space-x-2">
-                      <User size={16} />
-                      <span>Profile Settings</span>
-                    </div>
-                  </a>
-                  <hr className="my-1" />
-                  <button
-                    onClick={handleSignOut}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <LogOut size={16} />
-                      <span>Sign Out</span>
-                    </div>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Mobile Menu Button */}
-          <Button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            variant="ghost"
-            className="md:hidden text-white hover:bg-white/10"
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </Button>
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              className="text-white hover:bg-white/10"
+              onClick={() => {
+                const mobileMenu = document.getElementById('mobile-menu');
+                mobileMenu?.classList.toggle('hidden');
+              }}
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </Button>
+          </div>
         </div>
 
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-white/20 py-4">
-            <nav className="space-y-2">
-              {navItems.map((item) => {
-                const Icon = item.icon
-                return (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 transition-colors duration-200"
-                  >
-                    <Icon size={20} />
-                    <span>{item.name}</span>
-                  </a>
-                )
-              })}
-              <hr className="border-white/20 my-2" />
-              <button
-                onClick={handleSignOut}
-                className="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white/10 transition-colors duration-200 text-red-300 w-full text-left"
+        {/* Mobile Navigation Menu */}
+        <div id="mobile-menu" className="hidden md:hidden pb-4">
+          <div className="space-y-2">
+            {navItems.map((item) => (
+              <Button
+                key={item.path}
+                onClick={() => {
+                  handleNavigation(item.path);
+                  document.getElementById('mobile-menu')?.classList.add('hidden');
+                }}
+                variant="ghost"
+                className={`w-full justify-start px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                  isActive(item.path)
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'text-gray-300 hover:text-white hover:bg-white/10'
+                }`}
               >
-                <LogOut size={20} />
-                <span>Sign Out</span>
-              </button>
-            </nav>
+                {item.label}
+              </Button>
+            ))}
+            <div className="pt-2 mt-2 border-t border-white/20">
+              <Button
+                onClick={() => {
+                  handleSignOut();
+                  document.getElementById('mobile-menu')?.classList.add('hidden');
+                }}
+                variant="ghost"
+                className="w-full justify-start px-4 py-3 text-gray-300 hover:text-red-400 hover:bg-red-500/10 font-medium"
+              >
+                Sign Out
+              </Button>
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </header>
-  )
+  );
 }
