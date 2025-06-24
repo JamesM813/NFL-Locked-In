@@ -15,7 +15,7 @@ export type DateRange = {
     end: Date
 }
 
-export type userData = {
+export type profileData = {
     id: string
     email: string
     username: string
@@ -23,7 +23,16 @@ export type userData = {
 }
 
 export type groupData = {
-    id: string
+    id: number
     name: string
+    group_picture_url: string
+}
+
+export type profileGroupData = {
+    id: number
+    user_id: string
+    group_id: number
+    is_admin: boolean
+    groups: groupData
 }
   

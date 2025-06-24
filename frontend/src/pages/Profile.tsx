@@ -1,11 +1,11 @@
 import { supabase } from "@/lib/supabase"
-import type { userData } from "@/utils/types"
+import type { profileData } from "@/utils/types"
 import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Camera } from "lucide-react"
 
 export default function Profile() {
-  const [userData, setUserData] = useState<userData | null>(null)
+  const [userData, setUserData] = useState<profileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -30,7 +30,7 @@ export default function Profile() {
         if (error) {
           console.error('Error fetching user data:', error)
         } else if (data) {
-          const profileData: userData = {
+          const profileData: profileData = {
             id: user.id,
             email: user.email || '',
             username: data.username,
