@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,7 @@ export default function Login() {
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [username, setUsername] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -26,12 +28,19 @@ export default function Login() {
         if(password !== confirmPassword){
           throw new Error("Passwords do not match! Please re-enter and try again.")
         }
+
         const {data, error} = await supabase.auth.signUp({ 
           email,
-          password
+          password,
+          options: {
+            data: {
+              username: username
+            }
+          }
         })
         if (error) throw error
-        setMessage('Successfully signed up! Please log in.')
+
+        setMessage('Successfully signed up! Check your email for a confirmation link.')
         setIsSignUp(false)
       } else {
         const {data, error} = await supabase.auth.signInWithPassword({
@@ -42,6 +51,7 @@ export default function Login() {
         setMessage('Login in success!')
         navigate("/dashboard")
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any){
       setMessage(error.message)
     } finally {
@@ -86,6 +96,24 @@ export default function Login() {
               />
             </div>
 
+            {/*Username field */}
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor='username' className='text-sm font-medium'>
+                  Username
+                </Label>
+                <Input 
+                  id='username'
+                  type='text'
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Please choose your username"
+                  className='h-11'
+                  required
+                  />
+              </div>
+            )}
+
             {/* Password Field */}
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium">
@@ -103,9 +131,9 @@ export default function Login() {
             </div>
 
             {/* Confirm Password Field */}
-            <div>{isSignUp ? 
+            {isSignUp && (
               <div className="space-y-2">
-                <Label htmlFor='confirm-password' className='test-sm font-medium'>
+                <Label htmlFor='confirm-password' className='text-sm font-medium'>
                   Confirm Password
                 </Label>
                 <Input 
@@ -117,23 +145,28 @@ export default function Login() {
                   className='h-11'
                   required
                   />
-              </div> : (<div></div>)}
-            </div>
+              </div>
+            )}
 
             {/* Forgot Password Link */}
-            <div className="text-right">
-              <a 
-                href="#" 
-                className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-              >
-                Forgot your password?
-              </a>
-            </div>
+            {!isSignUp && (
+                <div className="text-right">
+                    <a 
+                        href="#" 
+                        className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                        Forgot your password?
+                    </a>
+                </div>
+            )}
             
-            <div>
-              {message}
-            </div>
-            {/* Login Button */}
+            {message && (
+                <div className="text-center p-2 rounded-md bg-gray-100 text-sm text-gray-700">
+                    {message}
+                </div>
+            )}
+            
+            {/* Auth Button */}
             <Button className="w-full h-11 text-base font-semibold" type="submit" disabled={loading} onClick={handleAuth}>
               {loading ? 'Loading...': (isSignUp ? 'Sign Up' : 'Login')}
             </Button>
@@ -173,7 +206,7 @@ export default function Login() {
 
         {/* Sign Up Link */}
         <div className="text-center mt-6">
-          <Button type="button" onClick={() => setIsSignUp(!isSignUp)} className='text-sm text-white hover:underline'>
+          <Button type="button" onClick={() => { setIsSignUp(!isSignUp); setMessage(''); }} className='text-sm text-white hover:underline bg-transparent hover:bg-transparent'>
             {isSignUp ? 'Already have an account? Login' : "Don't have an account yet? Sign up"}
           </Button>
         </div>
