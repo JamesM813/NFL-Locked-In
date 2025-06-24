@@ -21,7 +21,7 @@ export default function Header() {
 
   const navItems = [
     { label: 'Dashboard', path: '/dashboard' },
-    { label: 'Groups', path: '/groups' },
+    { label: 'My Groups', path: '/groups' },
     { label: 'Schedule', path: '/schedule' },
     { label: 'Profile', path: '/profile' }
   ];

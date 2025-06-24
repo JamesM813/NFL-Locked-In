@@ -1,23 +1,7 @@
 import { supabase } from '@/lib/supabase'
+import type { Game, DateRange } from '@/utils/types'
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-
-type Game = {
-  id: string
-  created_at: string
-  api_game_id: string
-  week: number
-  game_time: string
-  status: string
-  home_team_id: string
-  away_team_id: string
-  winner_id: string | null
-}
-
-type DateRange = {
-  start: Date
-  end: Date
-}
 
 export default function Schedule() {
   const [teamNameMap, setTeamNameMap] = useState<Map<string, string>>(new Map())
