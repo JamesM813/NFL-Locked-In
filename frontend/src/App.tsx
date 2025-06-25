@@ -4,6 +4,7 @@ import DashboardPage from './pages/Dashboard'
 import SchedulePage from './pages/Schedule'
 import ProfilePage from './pages/Profile'
 import GroupsPage from './pages/Groups'
+import CreateGroupPage from './pages/CreateGroup'
 import ProtectedLayout from './components/ProtectedLayout'
 import ProtectedRoute from './components/ProtectedRoute'
 import RootRedirect from './components/RootRedirect'
@@ -22,6 +23,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage/>}/>
               <Route path='/schedule' element={<SchedulePage />}/>
               <Route path='/groups' element = {<GroupsPage />}/>
+              <Route path='/create-group' element={<CreateGroupPage />}/>
               <Route path='/profile' element={<ProfilePage />}/>
               </Route>
           </Route>

@@ -26,6 +26,8 @@ export type groupData = {
     id: number
     name: string
     group_picture_url: string
+    allow_invites: boolean
+    admin_id: string
 }
 
 export type profileGroupData = {
