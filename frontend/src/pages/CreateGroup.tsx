@@ -1,99 +1,100 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
+import { useGroup } from "@/context/GroupContext";
 
 
 export default function CreateGroup() {
   const [groupName, setGroupName] = useState("");
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [allowInvites, setAllowInvites] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
-
+  const groupContext = useGroup()
+  if (!groupContext) { throw new Error("useGroup must be used within a GroupProvider")}
+  const { refetchGroups } = groupContext
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!groupName.trim()) return; // Prevent submission if name is empty
     setIsLoading(true);
-
-    const { data: { user } } = await supabase.auth.getUser();
-    console.log('Auth user ID:', user?.id);
-
-
+  
     try {
-      let profilePictureUrl = null;
-
+      // 1. Get user data once and reuse it
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not found. Please log in again.");
+  
+      let profilePictureUrl: string | null = null;
+  
       if (profilePicture) {
-        const fileExt = profilePicture.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('group-avatars') // You'll need to create this bucket
-          .upload(fileName, profilePicture);
-
-        if (uploadError) {
-          throw uploadError;
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('group-avatars')
-          .getPublicUrl(fileName);
+        // 2. Check if the file is a preset (size is 0) or a real upload
+        const isPreset = profilePicture.size === 0;
+  
+        if (isPreset) {
+          // 3. If it's a preset, just use its name (which is the path)
+          profilePictureUrl = profilePicture.name;
+        } else {
+          // 4. If it's a real file, upload it to Supabase Storage
+          const fileExt = profilePicture.name.split('.').pop();
+          // Use crypto.randomUUID() for a more robust unique file name
+          const fileName = `${crypto.randomUUID()}.${fileExt}`;
           
-        profilePictureUrl = publicUrl;
+          const { error: uploadError } = await supabase.storage
+            .from('group-avatars')
+            .upload(fileName, profilePicture);
+  
+          if (uploadError) {
+            throw uploadError;
+          }
+  
+          const { data: { publicUrl } } = supabase.storage
+            .from('group-avatars')
+            .getPublicUrl(fileName);
+            
+          profilePictureUrl = publicUrl;
+        }
       }
+  
+      const session = await supabase.auth.getSession();
+      console.log("Session user ID (auth.uid()):", session.data.session?.user.id);
+      console.log("User ID used in insert (admin_id):", user.id);
 
+      // Insert group data into the 'groups' table
       const { data: groupData, error: groupUploadError } = await supabase
         .from('groups')
         .insert({
           name: groupName,
-          group_picture_url: profilePictureUrl,
+          group_picture_url: profilePictureUrl ?? 'https://b.fssta.com/uploads/application/nfl/headshots/327798.vresize.350.350.medium.7.png',
           allow_invites: allowInvites,
-          admin_id: (await supabase.auth.getUser()).data.user?.id
+          admin_id: user.id // Reuse user object
         })
         .select()
         .single();
-
+  
       if (groupUploadError) {
         throw groupUploadError;
       }
-      console.log('Group created successfully:', groupData);
-
-      const { data, error } = await supabase
-      .from('profile_groups')
-      .insert({
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-        group_id: groupData.id,
-        is_admin: true
-      })
-      navigate('/groups')
-      
-    } catch (error) {
   
-      console.error('Error creating group:', error );
-
+      // Add the admin user to the 'profile_groups' junction table
+      const { error: profileGroupUploadError } = await supabase
+        .from('profile_groups')
+        .insert({
+          user_id: user.id, // Reuse user object
+          group_id: groupData.id,
+          is_admin: true
+        });
+  
+      if (profileGroupUploadError) {
+        throw profileGroupUploadError;
+      }
+      await refetchGroups()
+      navigate('/groups');
+  
+    } catch (error) {
+      console.error('Error creating group:', error);
+      // Optionally, show an error message to the user
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setProfilePicture(e.dataTransfer.files[0]);
     }
   };
 
@@ -123,52 +124,50 @@ export default function CreateGroup() {
             />
           </div>
 
-          {/* Profile Picture Upload */}
+          {/* Profile Picture Selection */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-300">
               Profile Picture
             </label>
-            <div
-              className={`relative w-full h-32 rounded-xl border-2 border-dashed transition-all duration-200 ${
-                dragActive 
-                  ? 'border-blue-500 bg-blue-500/10' 
-                  : 'border-white/20 hover:border-white/30'
-              }`}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-            >
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-              <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                {profilePicture ? (
-                  <div className="text-center">
-                    <div className="w-8 h-8 mx-auto mb-2 bg-green-500/20 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <p className="text-sm font-medium text-green-400">{profilePicture.name}</p>
-                    <p className="text-xs text-gray-500">Click to change</p>
+            <div className="grid grid-cols-4 gap-4">
+              {/* Preset Images */}
+              {[1, 2, 3].map((i) => {
+                const presetUrl = `/preset-group-avatars/avatar-${i}.png`; // update paths if needed
+                return (
+                  <div
+                    key={i}
+                    onClick={() => {
+                      setProfilePicture(null);
+                      // Set the URL directly so you can upload it later as needed
+                      (document.getElementById("custom-file") as HTMLInputElement).value = "";
+                      (setProfilePicture as any)(new File([], presetUrl)); // Fake File for logic
+                    }}
+                    className={`w-20 h-20 rounded-full cursor-pointer border-4 ${
+                      profilePicture?.name === presetUrl ? "border-blue-500" : "border-transparent"
+                    } overflow-hidden ring-1 ring-white/10 hover:ring-white/30 transition-all`}
+                  >
+                    <img src={presetUrl} alt={`Avatar ${i}`} className="w-full h-full object-cover" />
                   </div>
-                ) : (
-                  <div className="text-center">
-                    <div className="w-8 h-8 mx-auto mb-2 bg-white/10 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                    </div>
-                    <p className="text-sm">Drop image here or click to browse</p>
-                    <p className="text-xs text-gray-500">PNG, JPG up to 10MB</p>
-                  </div>
-                )}
-              </div>
+                );
+              })}
+
+              {/* Custom Upload Circle */}
+              <label className="w-20 h-20 rounded-full cursor-pointer bg-white/5 hover:bg-white/10 flex items-center justify-center border-2 border-dashed border-white/20">
+                <input
+                  id="custom-file"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </label>
             </div>
+            {profilePicture && profilePicture.name && !profilePicture.name.startsWith("/preset-avatars/") && (
+              <p className="text-xs text-gray-500 mt-2">{profilePicture.name}</p>
+            )}
           </div>
 
           {/* Settings with Apple-style toggles */}

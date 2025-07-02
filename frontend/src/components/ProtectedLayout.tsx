@@ -11,6 +11,20 @@ export default function ProtectedLayout() {
   const [groups, setGroups] = useState<profileGroupData[]>([])
   const [loading, setLoading] = useState(true)
 
+  async function refetchGroups() {
+    if (!user?.id) return
+    const { data: userGroups, error: groupError } = await supabase
+      .from('profile_groups')
+      .select('*, groups(*)')
+      .eq('user_id', user.id)
+
+    if (!groupError && userGroups) {
+      setGroups(userGroups)
+    } else {
+      console.error("Failed to refresh groups:", groupError)
+    }
+  }
+
   useEffect(() => {
     async function fetchUserAndGroups() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -29,9 +43,10 @@ export default function ProtectedLayout() {
           .from('profile_groups')
           .select('*, groups(*)')
           .eq('user_id', user.id)
-        
-          console.log(userGroups)
-        if (!groupError) setGroups(userGroups)
+
+        if (!groupError && userGroups) {
+          setGroups(userGroups)
+        }
       }
 
       setLoading(false)
@@ -44,7 +59,7 @@ export default function ProtectedLayout() {
 
   return (
     <ProfileContext.Provider value={user}>
-      <GroupContext.Provider value={groups}>
+      <GroupContext.Provider value={{ groups, refetchGroups }}>
         <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black">
           <Header />
           <main>
@@ -55,4 +70,3 @@ export default function ProtectedLayout() {
     </ProfileContext.Provider>
   )
 }
-
