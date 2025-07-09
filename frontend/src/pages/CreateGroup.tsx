@@ -86,7 +86,6 @@ export default function CreateGroup() {
         admin_id: user.id
       });
 
-      // Insert group data into the 'groups' table
       const { data: groupData, error: groupUploadError } = await supabase
         .from('groups')
         .insert({
@@ -129,9 +128,15 @@ export default function CreateGroup() {
       await refetchGroups();
       navigate('/groups');
   
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating group:', error);
-      setError(error.message || 'An unexpected error occurred');
+    
+      if (error instanceof Error) {
+        setError(error.message || 'An unexpected error occurred');
+      } else {
+        setError('An unexpected error occurred');
+      }
+    
     } finally {
       setIsLoading(false);
     }

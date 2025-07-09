@@ -1,4 +1,3 @@
-import fetch from 'node-fetch'
 import {supabase} from './supabase-node'
 
 interface Team {
@@ -13,10 +12,12 @@ interface Game {
   game_time: string
   status: string
   week: number
+  wave: number
   winner_id?: string | null
 }
 
 interface NFLApiResponse {
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
     events: any[]
 }
 
@@ -102,6 +103,16 @@ async function fetchScheduleData(): Promise<void> {
         continue
       }
 
+      let wave: number = 0
+
+      if( 4 <= new Date(game.date).getDay() && new Date(game.date).getDay()  <= 6 ){
+        wave = 1
+      } else {
+        wave = 2
+      }
+
+      if(wave === 0) throw new Error(`Invalid wave for game ${gameId} on ${game.date}`)
+
       const gameObj: Game = {
         api_game_id: gameId,
         home_team_id: homeTeamId,
@@ -109,12 +120,13 @@ async function fetchScheduleData(): Promise<void> {
         game_time: game.date || '',
         status: game.status?.type?.description || '',
         week: gameWeek,
+        wave: wave,
         winner_id: null 
       }
 
       weeks[gameWeek].push(gameObj)
 
-      const { data, error } = await supabase
+      const {  error } = await supabase
         .from('nfl_schedule')
         .upsert(gameObj, { 
           onConflict: 'api_game_id' 

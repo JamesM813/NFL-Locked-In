@@ -221,7 +221,7 @@ export default function Schedule() {
                     </div>
                   </div>
                   <div className="text-xs text-gray-500">
-                    API Game ID: {game.api_game_id}
+                    Wave: {game.wave}
                   </div>
                 </div>
               </CardContent>

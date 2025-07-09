@@ -9,9 +9,11 @@ import { supabase } from "@/lib/supabase"
 export default function Groups() {
 
   const groupContext = useGroup()
+  const profileContext = useProfile()
   if (!groupContext) { throw new Error("useGroup must be used within a GroupProvider")}
+  if (!profileContext) { throw new Error("useProfile must be used within a ProfileProvider")}
   const { groups, refetchGroups } = groupContext
-  const profile = useProfile()
+  const { profile } = profileContext
   
   const navigator = useNavigate()
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
@@ -60,7 +62,7 @@ export default function Groups() {
 
 
     if (joinCodeData.join_code == joinCode) {
-      //TODO
+
       const { data: profileGroupData, error: profileGroupError } = await supabase
         .from('profile_groups')
         .select('*')
@@ -103,7 +105,7 @@ export default function Groups() {
     <>
       <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black p-4 md:p-8 text-white">
         <div className="max-w-7xl mx-auto space-y-8">
-          {/* Page Header */}
+
           <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Groups</h1>

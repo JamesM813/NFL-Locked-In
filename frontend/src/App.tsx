@@ -7,6 +7,7 @@ import ProfilePage from './pages/Profile'
 import GroupsPage from './pages/Groups'
 import CreateGroupPage from './pages/CreateGroup'
 import GroupDashPage from './pages/GroupDash'
+import HowToPlayPage from './pages/HowToPlay'
 import ProtectedLayout from './components/ProtectedLayout'
 import ProtectedRoute from './components/ProtectedRoute'
 import RootRedirect from './components/RootRedirect'
@@ -30,6 +31,7 @@ function App() {
                 <Route path='/create-group' element={<CreateGroupPage />}/>
                 <Route path='/group/:groupId' element={<GroupDashPage />}/>
                 <Route path='/profile' element={<ProfilePage />}/>
+                <Route path='/how-to-play' element={<HowToPlayPage />}/>
                 </Route>
             </Route>
         </Routes>     

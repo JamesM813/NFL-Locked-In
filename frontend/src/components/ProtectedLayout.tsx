@@ -11,6 +11,24 @@ export default function ProtectedLayout() {
   const [groups, setGroups] = useState<profileGroupData[]>([])
   const [loading, setLoading] = useState(true)
 
+  async function refetchProfile() {
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) {
+      setUser(null)
+      return
+    }
+
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authUser.id)
+      .single()
+
+    if (!error) {
+      setUser(profile)
+    }
+  }
+  
   async function refetchGroups() {
     if (!user?.id) return
     const { data: userGroups, error: groupError } = await supabase
@@ -58,7 +76,10 @@ export default function ProtectedLayout() {
   if (loading) return <div className="text-white p-6">Loading...</div>
 
   return (
-    <ProfileContext.Provider value={user}>
+    <ProfileContext.Provider value={{ 
+      profile: user, 
+      refetchProfiles: refetchProfile 
+    }}>
       <GroupContext.Provider value={{ groups, refetchGroups }}>
         <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black">
           <Header />

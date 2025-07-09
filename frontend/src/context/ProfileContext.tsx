@@ -1,7 +1,12 @@
 import {createContext, useContext} from 'react'
 import type { profileData } from '@/utils/types'
 
-export const ProfileContext = createContext<profileData | null>(null)
+type ProfileGroupType = {
+    profile: profileData | null
+    refetchProfiles: () => Promise<void>
+  }
+
+export const ProfileContext = createContext<ProfileGroupType | null>(null)
 
 export function useProfile() {
     return useContext(ProfileContext)

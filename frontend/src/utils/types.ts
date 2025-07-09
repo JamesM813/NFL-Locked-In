@@ -7,6 +7,7 @@ export type Game = {
     status: string
     home_team_id: string
     away_team_id: string
+    wave: string
     winner_id: string | null
 }
   

@@ -23,7 +23,8 @@ export default function Header() {
     { label: 'Dashboard', path: '/dashboard' },
     { label: 'My Groups', path: '/groups' },
     { label: 'Schedule', path: '/schedule' },
-    { label: 'Profile', path: '/profile' }
+    { label: 'Profile', path: '/profile' },
+    { label: 'How to Play', path: '/how-to-play' },
   ];
 
   return (
