@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -55,6 +56,18 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSocialLogin = () => {
+    toast.error('This feature is not available yet, coming soon! Please login above.', {
+      duration: 4000,
+      position: 'top-center',
+      style: {
+        background: '#1f2937',
+        color: '#fff',
+        border: '1px solid #374151',
+      },
+    });
   };
 
   // Reusable styles for form elements
@@ -143,7 +156,12 @@ export default function Login() {
 
             {/* Social Login Buttons */}
             <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" className=" text-gray-400 h-11 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white rounded-xl">
+              <Button 
+                variant="outline" 
+                className=" text-gray-400 h-11 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white rounded-xl"
+                onClick={() => handleSocialLogin()}
+                type="button"
+              >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -152,7 +170,12 @@ export default function Login() {
                 </svg>
                 Google
               </Button>
-              <Button variant="outline" className="text-gray-400 h-11 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white rounded-xl">
+              <Button 
+                variant="outline" 
+                className="text-gray-400 h-11 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white rounded-xl"
+                onClick={() => handleSocialLogin()}
+                type="button"
+              >
                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M16.365 1.43c0 1.14-.44 2.072-1.095 2.843-.768.908-1.773 1.61-2.897 1.509-.077-1.23.395-2.34 1.05-3.094.745-.849 1.934-1.413 2.942-1.258zm5.46 17.72c-.676 1.58-1.49 3.06-2.61 4.358-1.105 1.292-2.49 2.482-4.248 2.487-1.476.005-1.947-.95-3.66-.944-1.713.006-2.22.958-3.692.952-1.757-.005-3.23-1.445-4.335-2.737C2.78 21.374.85 17.493 1.02 13.775c.104-2.257.86-4.565 2.296-6.295 1.47-1.771 3.41-2.838 5.354-2.785 1.267.032 2.468.898 3.66.91 1.165.012 2.27-.902 3.76-.884 1.308.017 2.74.688 3.775 1.856-1.473.923-2.44 2.283-2.342 4.18.108 2.144 1.442 3.414 2.486 4.056-.206.554-.432 1.097-.667 1.633z"/>
                 </svg>
