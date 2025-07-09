@@ -161,7 +161,7 @@ export default function Schedule() {
 
         {/* Week Selector */}
         <div className="mb-8">
-          <div className="overflow-x-auto pb-4">
+          <div className="overflow-x-auto custom-scroll pb-4">
             <div className="flex space-x-3 min-w-max">
               {availableWeeks.map((week) => (
                 <button
@@ -227,8 +227,35 @@ export default function Schedule() {
               </CardContent>
             </Card>
           ))}
+          <style>
+            {`
+              .custom-scroll::-webkit-scrollbar {
+                height: 8px;
+              }
+
+              .custom-scroll::-webkit-scrollbar-track {
+                background: #1f2937; /* gray-800 */
+              }
+
+              .custom-scroll::-webkit-scrollbar-thumb {
+                background-color: #4b5563; /* gray-600 */
+                border-radius: 9999px;
+              }
+
+              .custom-scroll::-webkit-scrollbar-thumb:hover {
+                background-color: #6b7280; /* gray-500 */
+              }
+
+              .custom-scroll {
+                scrollbar-width: thin;
+                scrollbar-color: #4b5563 #1f2937;
+              }
+            `}
+          </style>
+
         </div>
       </div>
     </div>
+    
   )
 }

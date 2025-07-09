@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import {Toaster} from 'react-hot-toast'
 import LoginPage from './pages/Login'
 import DashboardPage from './pages/Dashboard'
 import SchedulePage from './pages/Schedule'
@@ -15,22 +16,25 @@ function App() {
 
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<RootRedirect/>}/>
-        <Route path="/login" element={<LoginPage/>} />
-          <Route element={<ProtectedRoute/>}>
-            <Route element={<ProtectedLayout/>}>
-              <Route path="/dashboard" element={<DashboardPage/>}/>
-              <Route path='/schedule' element={<SchedulePage />}/>
-              <Route path='/groups' element = {<GroupsPage />}/>
-              <Route path='/create-group' element={<CreateGroupPage />}/>
-              <Route path='/group/:groupId' element={<GroupDashPage />}/>
-              <Route path='/profile' element={<ProfilePage />}/>
-              </Route>
-          </Route>
-      </Routes>
-    </Router>
+    <>
+     <Toaster />
+      <Router>
+        <Routes>
+          <Route path="/" element={<RootRedirect/>}/>
+          <Route path="/login" element={<LoginPage/>} />
+            <Route element={<ProtectedRoute/>}>
+              <Route element={<ProtectedLayout/>}>
+                <Route path="/dashboard" element={<DashboardPage/>}/>
+                <Route path='/schedule' element={<SchedulePage />}/>
+                <Route path='/groups' element = {<GroupsPage />}/>
+                <Route path='/create-group' element={<CreateGroupPage />}/>
+                <Route path='/group/:groupId' element={<GroupDashPage />}/>
+                <Route path='/profile' element={<ProfilePage />}/>
+                </Route>
+            </Route>
+        </Routes>     
+      </Router>
+    </>
   )
 }
 

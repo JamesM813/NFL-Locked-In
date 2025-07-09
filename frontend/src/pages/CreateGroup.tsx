@@ -3,12 +3,12 @@ import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { useGroup } from "@/context/GroupContext";
 
-
 export default function CreateGroup() {
   const [groupName, setGroupName] = useState("");
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [allowInvites, setAllowInvites] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const groupContext = useGroup()
   if (!groupContext) { throw new Error("useGroup must be used within a GroupProvider")}
@@ -16,48 +16,75 @@ export default function CreateGroup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!groupName.trim()) return; // Prevent submission if name is empty
+    if (!groupName.trim()) return;
+    
     setIsLoading(true);
+    setError(null);
   
     try {
-      // 1. Get user data once and reuse it
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not found. Please log in again.");
+      // 1. Get user data and verify authentication
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("Authentication failed. Please log in again.");
+      }
+
+      console.log("User authenticated:", user.id);
   
       let profilePictureUrl: string | null = null;
   
       if (profilePicture) {
-        // 2. Check if the file is a preset (size is 0) or a real upload
         const isPreset = profilePicture.size === 0;
   
         if (isPreset) {
-          // 3. If it's a preset, just use its name (which is the path)
           profilePictureUrl = profilePicture.name;
+          console.log("Using preset image:", profilePictureUrl);
         } else {
-          // 4. If it's a real file, upload it to Supabase Storage
-          const fileExt = profilePicture.name.split('.').pop();
-          // Use crypto.randomUUID() for a more robust unique file name
+          console.log("Uploading custom file:", profilePicture.name, "Size:", profilePicture.size);
+          
+          // Validate file before upload
+          if (profilePicture.size > 50 * 1024 * 1024) { // 5MB limit
+            throw new Error("File size must be less than 5MB");
+          }
+
+          const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+          if (!allowedTypes.includes(profilePicture.type)) {
+            throw new Error("File must be an image (JPEG, PNG, GIF, or WebP)");
+          }
+
+          const fileExt = profilePicture.name.split('.').pop()?.toLowerCase();
           const fileName = `${crypto.randomUUID()}.${fileExt}`;
           
-          const { error: uploadError } = await supabase.storage
+          console.log("Uploading to:", fileName);
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
             .from('group-avatars')
-            .upload(fileName, profilePicture);
+            .upload(fileName, profilePicture, {
+              cacheControl: '3600',
+              upsert: false
+            });
   
           if (uploadError) {
-            throw uploadError;
+            console.error("Upload error:", uploadError);
+            throw new Error(`Upload failed: ${uploadError.message}`);
           }
+
+          console.log("Upload successful:", uploadData);
   
           const { data: { publicUrl } } = supabase.storage
             .from('group-avatars')
             .getPublicUrl(fileName);
             
           profilePictureUrl = publicUrl;
+          console.log("Public URL:", profilePictureUrl);
         }
       }
-  
-      const session = await supabase.auth.getSession();
-      console.log("Session user ID (auth.uid()):", session.data.session?.user.id);
-      console.log("User ID used in insert (admin_id):", user.id);
+
+      console.log("Creating group with data:", {
+        name: groupName,
+        group_picture_url: profilePictureUrl ?? 'https://b.fssta.com/uploads/application/nfl/headshots/327798.vresize.350.350.medium.7.png',
+        allow_invites: allowInvites,
+        admin_id: user.id
+      });
 
       // Insert group data into the 'groups' table
       const { data: groupData, error: groupUploadError } = await supabase
@@ -66,33 +93,45 @@ export default function CreateGroup() {
           name: groupName,
           group_picture_url: profilePictureUrl ?? 'https://b.fssta.com/uploads/application/nfl/headshots/327798.vresize.350.350.medium.7.png',
           allow_invites: allowInvites,
-          admin_id: user.id // Reuse user object
+          admin_id: user.id
         })
         .select()
         .single();
   
       if (groupUploadError) {
-        throw groupUploadError;
+        console.error("Group creation error:", groupUploadError);
+        throw new Error(`Failed to create group: ${groupUploadError.message}`);
       }
+
+      console.log("Group created successfully:", groupData);
   
-      // Add the admin user to the 'profile_groups' junction table
+      console.log("Adding user to profile_groups:", {
+        user_id: user.id,
+        group_id: groupData.id,
+        is_admin: true
+      });
+
       const { error: profileGroupUploadError } = await supabase
         .from('profile_groups')
         .insert({
-          user_id: user.id, // Reuse user object
+          user_id: user.id,
           group_id: groupData.id,
           is_admin: true
         });
   
       if (profileGroupUploadError) {
-        throw profileGroupUploadError;
+        console.error("Profile group error:", profileGroupUploadError);
+        throw new Error(`Failed to add user to group: ${profileGroupUploadError.message}`);
       }
-      await refetchGroups()
+
+      console.log("User added to profile_groups successfully");
+      
+      await refetchGroups();
       navigate('/groups');
   
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating group:', error);
-      // Optionally, show an error message to the user
+      setError(error.message || 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -108,6 +147,12 @@ export default function CreateGroup() {
     <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black p-4 md:p-8 text-white">
       <div className="max-w-lg mx-auto bg-white/5 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-white/10">
         <h1 className="text-3xl font-light mb-8 text-center tracking-tight">Create Group</h1>
+        
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl">
+            <p className="text-red-200 text-sm">{error}</p>
+          </div>
+        )}
         
         <div className="space-y-8">
           {/* Group Name */}
@@ -132,15 +177,14 @@ export default function CreateGroup() {
             <div className="grid grid-cols-4 gap-4">
               {/* Preset Images */}
               {[1, 2, 3].map((i) => {
-                const presetUrl = `/preset-group-avatars/avatar-${i}.png`; // update paths if needed
+                const presetUrl = `/preset-group-avatars/avatar-${i}.png`;
                 return (
                   <div
                     key={i}
                     onClick={() => {
                       setProfilePicture(null);
-                      // Set the URL directly so you can upload it later as needed
                       (document.getElementById("custom-file") as HTMLInputElement).value = "";
-                      (setProfilePicture as any)(new File([], presetUrl)); // Fake File for logic
+                      setProfilePicture(new File([], presetUrl));
                     }}
                     className={`w-20 h-20 rounded-full cursor-pointer border-4 ${
                       profilePicture?.name === presetUrl ? "border-blue-500" : "border-transparent"
@@ -165,15 +209,13 @@ export default function CreateGroup() {
                 </svg>
               </label>
             </div>
-            {profilePicture && profilePicture.name && !profilePicture.name.startsWith("/preset-avatars/") && (
+            {profilePicture && profilePicture.name && !profilePicture.name.startsWith("/preset-") && (
               <p className="text-xs text-gray-500 mt-2">{profilePicture.name}</p>
             )}
           </div>
 
-          {/* Settings with Apple-style toggles */}
+          {/* Settings */}
           <div className="space-y-6">
-            
-
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-medium text-gray-300">

@@ -1,18 +1,65 @@
 import { useProfile } from "@/context/ProfileContext"
 import { useGroup } from "@/context/GroupContext"
 import type { profileData, profileGroupData } from "@/utils/types"
+import { useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react"
+
 export default function Dashboard() {
   
   const profile: profileData | null = useProfile()
-  const groups: profileGroupData[] | null = useGroup()
+  const groupContext = useGroup()
+  const navigator = useNavigate()
+
+  if (!groupContext) throw new Error("useGroup must be used within a GroupProvider")
+  const { groups } = groupContext 
+
+  const [loading, setLoading] = useState(false)
+  const [news, setNews] = useState<{id: string, title: string, source: string, time: string, type: string, image: string, url: string}[]>([])
+
+  useEffect(() => {
+    async function fetchNews() {
+      setLoading(true)
+      try {
+        const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?limit=25')
+        if (!response.ok) throw new Error('Failed to fetch news')
+        const data = await response.json()
+
+        if(data.articles.length > 0){
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          data.articles = data.articles.map((article: any) => ({
+            id: article.id,
+            title: article.headline,
+            source: article.source?.name || 'ESPN',
+            time: `${new Date(article.published).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • ${new Date(article.published).toLocaleDateString([], {month: 'numeric', day: 'numeric'})}`,
+            type: article.type,
+            image: article.images?.[0]?.url || '',
+            url: article.links?.web?.href || '',
+          }))
+        }
+        setNews(data.articles || [])
+      } catch (error) {
+        console.error('Error fetching news:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchNews()
+  }, [])
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
-        <p className="text-white">Loading user data...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 via-gray-900 to-black">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+          <p className="text-white text-lg">Loading user data...</p>
+        </div>
       </div>
     )
   }
+
+  console.log(news)
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black p-4 md:p-8 text-white">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -29,52 +76,69 @@ export default function Dashboard() {
         </header>
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-md h-64">
-            <h2 className="text-xl font-semibold mb-2">Your Groups</h2>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-md h-[32rem]">
+            <h2 className="text-xl font-semibold mb-4">Your Groups</h2>
             <div className="text-gray-500 text-sm"></div>
             <ul className="space-y-2">
               {groups && groups.length > 0 ? (
-                groups.map((group) => (
-                <li key={group.id} className="p-4 bg-white/20 rounded-lg hover:bg-white/30 transition-colors">
-                  <div className="flex items-center space-x-3">
-                    <img 
-                      src={group.groups.group_picture_url || '/default-group-image.png'} 
-                      alt={`${group.groups.name} picture`}
-                      className="w-8 h-8 rounded-full object-cover border border-white/20"
-                    />
-                    <h3 className="text-lg font-semibold">{group.groups.name}</h3>
+                groups.map((group: profileGroupData) => (
+                  <div
+                    key={group.id}
+                    onClick={() => navigator('/group/' + group.group_id)}
+                    className="bg-white/20 rounded-lg p-2 hover:bg-white/30 transition-colors cursor-pointer"
+                  >
+                    <div className="flex space-x-2">
+                      <div className="w-20 h-20 bg-gray-600 rounded-lg flex-shrink-0 overflow-hidden">
+                        <img
+                          src={group.groups.group_picture_url || '/default-group-image.png'}
+                          alt={`${group.groups.name} picture`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-s font-semibold text-white line-clamp-2 leading-tight">
+                          {group.groups.name}
+                        </h3>
+                        <p className="text-xs text-gray-400 mt-0.5">Group ID: {group.group_id}</p>
+                      </div>
+                    </div>
                   </div>
-                </li>
                 ))
               ) : (
                 <p className="text-gray-500">No groups found.</p>
               )}
             </ul>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-md h-64">
-            <h2 className="text-xl font-semibold mb-2">Overview Chart</h2>
-            <div className="text-gray-500 text-sm">Chart will render here...</div>
-          </div>
-        </section>
-
-
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-md">
-            <p className="text-sm text-gray-400 mb-1"></p>
-            <p className="text-2xl font-semibold">—</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-md">
-            <p className="text-sm text-gray-400 mb-1">Active Sessions</p>
-            <p className="text-2xl font-semibold">—</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-md">
-            <p className="text-sm text-gray-400 mb-1">Tasks Completed</p>
-            <p className="text-2xl font-semibold">—</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-md">
-            <p className="text-sm text-gray-400 mb-1">Revenue</p>
-            <p className="text-2xl font-semibold">—</p>
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+            </div>
+            ) : (
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-md h-[32rem]">
+            <h2 className="text-xl font-semibold mb-4">NFL News</h2>
+            <div className="h-[calc(100%-3rem)] overflow-y-auto pr-2" style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#4B5563 #374151'
+            }}>
+              <div className="space-y-3">
+                {news.map((article) => (
+                  <div key={article.id} className="bg-white/20 rounded-lg p-2 hover:bg-white/30 transition-colors cursor-pointer" onClick={() => window.open(article.url, '_blank')}> 
+                    <div className="flex space-x-2"> 
+                      <div className="w-20 h-20 bg-gray-600 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden"> 
+                        <img src={article.image} className="w-full h-full object-cover"/>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-s font-semibold text-white line-clamp-2 leading-tight">
+                          {article.title}
+                        </h3>
+                        <p className="text-xs text-gray-400 mt-0.5">{article.source} • {article.time} • {article.type.replace(/([a-z])([A-Z])/g, "$1 $2")}</p> {/* Reduced margin-top */}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>)}
         </section>
       </div>
     </div>
