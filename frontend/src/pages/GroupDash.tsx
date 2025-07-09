@@ -1,7 +1,7 @@
 import { useGroup } from "@/context/GroupContext";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import type { profileData } from "@/utils/types";
+import type { GroupMember } from "@/utils/types";
 import { supabase } from "@/lib/supabase";
 import { toast } from "react-hot-toast";
 
@@ -23,9 +23,7 @@ export default function GroupDash() {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [confirmationText, setConfirmationText] = useState("");
   const [isLeavingGroup, setIsLeavingGroup] = useState(false);
-  const [groupMembers, setGroupMembers] = useState<
-    { user_id: string; is_admin: boolean; profiles: profileData; }[]
-  >([]);
+  const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,14 +31,28 @@ export default function GroupDash() {
       setLoading(true);
 
       const { data, error } = await supabase
-        .from("profile_groups")
-        .select("user_id, is_admin, profiles (id, username, profile_picture_url)")
-        .eq("group_id", groupId);
+      .from("profile_groups")
+      .select(`
+        user_id,
+        is_admin,
+        profiles:user_id (
+          id,
+          username,
+          profile_picture_url
+        )
+      `)
+      .eq("group_id", groupId);
 
       if (error) {
         console.error("Error fetching group members:", error);
       } else {
-        setGroupMembers(data)
+        const members = data?.map(member => ({
+          user_id: member.user_id,
+          is_admin: member.is_admin,
+          profiles: Array.isArray(member.profiles) ? member.profiles[0] : member.profiles
+        })).filter(member => member.profiles) || [];
+
+        setGroupMembers(members)
       }
 
       setLoading(false);

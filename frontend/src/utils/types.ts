@@ -40,4 +40,12 @@ export type profileGroupData = {
 }
   
 
-  
+export type GroupMember = {
+    user_id: string;
+    is_admin: boolean;
+    profiles: {
+      id: string;
+      username: string;
+      profile_picture_url: string;
+    };
+  }
