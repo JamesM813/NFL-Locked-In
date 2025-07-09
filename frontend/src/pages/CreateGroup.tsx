@@ -182,7 +182,10 @@ export default function CreateGroup() {
             <div className="grid grid-cols-4 gap-4">
               {/* Preset Images */}
               {[1, 2, 3].map((i) => {
-                const presetUrl = `/preset-group-avatars/avatar-${i}.png`;
+                const presetUrl = supabase
+                .storage
+                .from("preset-group-avatars")
+                .getPublicUrl(`avatar-${i}.png`).data.publicUrl
                 return (
                   <div
                     key={i}

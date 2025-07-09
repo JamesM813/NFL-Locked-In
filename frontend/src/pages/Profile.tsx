@@ -167,7 +167,10 @@ export default function Profile() {
               {/* First row */}
               <div className="grid grid-cols-4 gap-4">
                 {[1, 2, 3, 4].map((i) => {
-                  const presetUrl = `/preset-avatars/avatar-${i}.png`
+                  const presetUrl = supabase
+                  .storage
+                  .from("preset-avatars")
+                  .getPublicUrl(`avatar-${i}.png`).data.publicUrl
                   const isSelected = selectedAvatar === presetUrl || userData?.profile_picture_url === presetUrl
                   return (
                     <div
