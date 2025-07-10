@@ -5,6 +5,19 @@ import type { GroupMember } from "@/utils/types";
 import { supabase } from "@/lib/supabase";
 import { toast } from "react-hot-toast";
 
+interface NFLTeam {
+  id: string;
+  logo_url: string;
+  name: string;
+}
+
+interface Selection {
+  week: number;
+  teamId: string | null;
+  status: 'win' | 'loss' | 'pending';
+  score: string;
+}
+
 export default function GroupDash() {
   const { groupId } = useParams();
   const groupContext = useGroup();
@@ -18,13 +31,85 @@ export default function GroupDash() {
   const { groups } = groupContext;
   const userInGroupData = groups?.find((group) => group.group_id === Number(groupId));
 
-
   const [leaveGroupMessage, setLeaveGroupMessage] = useState("")
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [confirmationText, setConfirmationText] = useState("");
   const [isLeavingGroup, setIsLeavingGroup] = useState(false);
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
+  const [nflTeams, setNFLTeams] = useState<NFLTeam[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selections, setSelections] = useState<Selection[]>([]);
+  const [showTeamSelector, setShowTeamSelector] = useState<{ [key: number]: boolean }>({});
+
+
+  useEffect(() => {
+    async function fetchInitialData() {
+      const totalWeeks = 18;
+      const initialSelections: Selection[] = Array.from({ length: totalWeeks }, (_, index) => ({
+        week: index + 1,
+        teamId: null,
+        status: 'pending' as const,
+        score: '-'
+      }))
+  
+      try {
+
+        setSelections(initialSelections);
+        
+        const { data, error } = await supabase
+          .from("user_picks")
+          .select("week, team_id, status, score")
+          .eq("user_id", userInGroupData?.user_id)
+          .eq("group_id", groupId);
+  
+        if (error) {
+          console.error("Error fetching user selections:", error);
+          return;
+        }
+  
+        if (data && data.length > 0) {
+          //eslint-disable-next-line
+          const existingSelections: Selection[] = data.map((item: any) => ({
+            week: item.week,
+            teamId: item.team_id,
+            status: item.status || 'pending',
+            score: item.score || '-'
+          }));
+          
+          
+          setSelections(prev => prev.map(selection => {
+            const existing = existingSelections.find(s => s.week === selection.week);
+            return existing ? { ...selection, ...existing } : selection;
+          }));
+        }
+      } catch (err) {
+        console.error("Error in fetchInitialData:", err);
+      }
+    }
+  
+    fetchInitialData();
+  }, [groupId, userInGroupData?.user_id]); 
+
+
+  useEffect(() => {
+    async function fetchNFLTeams(){
+      const {data, error} = await supabase
+      .from("nfl_teams")
+      .select("*")
+
+      if(error) throw new Error(`Error fetching NFL teams: ${error.message}`);
+      if(data) {
+        //eslint-disable-next-line
+        const teams = data.map((team: any) => ({
+          id: team.id,
+          logo_url: team.logo_url,
+          name: team.name
+        }));
+        setNFLTeams(teams);
+      }
+    }
+    fetchNFLTeams()
+  }, [])
 
   useEffect(() => {
     async function fetchGroupMembers() {
@@ -95,7 +180,6 @@ export default function GroupDash() {
     }
   
     try {
-
       const { error: deleteError } = await supabase
         .from("group_join_codes")
         .delete()
@@ -103,7 +187,6 @@ export default function GroupDash() {
   
       if (deleteError) throw deleteError;
   
-
       const { data, error } = await supabase
         .from("group_join_codes")
         .insert([{ group_id: groupId }]) 
@@ -129,7 +212,6 @@ export default function GroupDash() {
       toast.error("Failed to create invite code. Please try again.");
     }
   }
-  
 
   function handleLeaveGroup() {
     if (userInGroupData?.is_admin) {
@@ -152,7 +234,6 @@ export default function GroupDash() {
     setIsLeavingGroup(true);
     
     try {
-
       const { error } = await supabase
         .from("profile_groups")
         .delete()
@@ -174,6 +255,121 @@ export default function GroupDash() {
     }
   }
 
+  const handleTeamSelection = async (week: number, teamId: string | null) => {
+    setSelections(prev => prev.map(selection => 
+      selection.week === week 
+        ? { ...selection, teamId: teamId === selection.teamId ? null : teamId } 
+        : selection
+    ));
+  
+    setShowTeamSelector(prev => ({ ...prev, [week]: false }));
+  
+    try {
+      if (teamId) {
+        const { data: gameData, error: gameError } = await supabase
+          .from('nfl_schedule')
+          .select('api_game_id')
+          .eq('week', week)
+          .or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
+          .single();
+  
+        if (gameError || !gameData) {
+          throw new Error('No game found for this team/week. Are they on bye?');
+        }
+
+        const { data, error } = await supabase
+          .from('user_picks')
+          .upsert({
+            user_id: userInGroupData?.user_id,
+            group_id: groupId,
+            week: week,
+            team_id: teamId,
+            game_id: gameData.api_game_id,
+            status: 'pending',
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,group_id,week'
+          })
+          .select();
+  
+        if (error) throw error;
+  
+        if (!data || data.length === 0) {
+          throw new Error('No rows were updated');
+        }
+  
+        toast.success(`Week ${week} pick updated successfully!`, {
+          duration: 2000,
+          position: "top-center",
+        });
+      } else {
+        const { error } = await supabase
+          .from('user_picks')
+          .delete()
+          .eq('user_id', userInGroupData?.user_id)
+          .eq('group_id', groupId)
+          .eq('week', week);
+        
+        if (error) throw error;
+        
+        toast.success(`Week ${week} selection cleared!`, {
+          duration: 2000,
+          position: "top-center",
+        });
+      }
+    } catch (error) {
+      console.error("Update failed:", error);
+      setSelections(prev => prev.map(selection => 
+        selection.week === week 
+          ? { ...selection, teamId: selection.teamId === teamId ? null : selection.teamId } 
+          : selection
+      ));
+       
+      toast.error(`Failed to update pick. Have you used this team before?`, {
+        duration: 3000,
+        position: "top-center",
+      });
+    }
+  };
+
+  const toggleTeamSelector = (week: number) => {
+    setShowTeamSelector(prev => ({ ...prev, [week]: !prev[week] }));
+  };
+
+  const getStatusIcon = (status: 'win' | 'loss' | 'pending') => {
+    switch (status) {
+      case 'win':
+        return (
+          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        );
+      case 'loss':
+        return (
+          <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+        );
+      default:
+        return (
+          <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        );
+    }
+  };
+
+  const getSelectedTeam = (teamId: string | null) => {
+    if (!teamId) return null;
+    return nflTeams.find(t => t.id === teamId);
+  };
+
   const isConfirmationValid = confirmationText === "LEAVE GROUP";
 
   return (
@@ -192,22 +388,21 @@ export default function GroupDash() {
             </div>
           </div>
 
-          {/* Future buttons/actions (like invite or settings) */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
-              className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all"
+              className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all text-sm md:text-base"
               onClick={handleChangeSettings}
             >
               Group Settings
             </button>
             <button
-              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl transition-all"
+              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl transition-all text-sm md:text-base"
               onClick={handleInviteMembers}
               >
                 Invite Members
               </button>
               <button
-                className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl transition-all"
+                className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl transition-all text-sm md:text-base"
                 onClick={handleLeaveGroup}
                 >
                 Leave Group
@@ -223,17 +418,137 @@ export default function GroupDash() {
         )}
 
         {/* Group Content */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Selections Placeholder */}
-          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 shadow-2xl min-h-[200px]">
-            <h2 className="text-xl font-semibold mb-2">Selections</h2>
-            <p className="text-gray-400 text-sm">
-              This section can show group stats, activity, or announcements.
-            </p>
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Selections */}
+          <div className="bg-white/5 backdrop-blur-xl p-4 md:p-6 rounded-2xl border border-white/10 shadow-2xl">
+            <h2 className="text-xl font-semibold mb-4">Selections</h2>
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {selections.map((selection) => {
+                const selectedTeam = getSelectedTeam(selection.teamId);
+                const isExpanded = showTeamSelector[selection.week] || false;
+                
+                return (
+                  <div
+                    key={selection.week}
+                    className="bg-white/10 p-4 rounded-xl border border-white/20"
+                  >
+                    {/* Main Selection Row */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        {/* Week Display */}
+                        <div className="flex-shrink-0 w-12 text-center">
+                          <p className="text-sm font-medium text-gray-300">Week</p>
+                          <p className="text-lg font-bold">{selection.week}</p>
+                        </div>
+                        
+                        {/* Team Selection Area */}
+                        <div className="flex-grow">
+                          {selectedTeam ? (
+                            <div className="flex items-center gap-3">
+                              <img 
+                                src={selectedTeam.logo_url} 
+                                alt={selectedTeam.name} 
+                                className="w-8 h-8 md:w-10 md:h-10 object-contain"
+                              />
+                              <div className="flex-grow">
+                                <p className="font-semibold text-sm md:text-base">{selectedTeam.name}</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-600 rounded-full flex items-center justify-center">
+                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                              </div>
+                              <p className="text-gray-400 text-sm md:text-base">Select Team</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right side - Status and Actions */}
+                      <div className="flex items-center gap-2 md:gap-4">
+                        <div className="hidden md:flex items-center gap-4">
+                          <div className="text-center">
+                            <p className="text-xs text-gray-300">Result</p>
+                            {getStatusIcon(selection.status)}
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-gray-300">Score</p>
+                            <p className="font-mono text-sm">{selection.score}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => toggleTeamSelector(selection.week)}
+                            className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                          </button>
+                          
+                          {selectedTeam && (
+                            <button
+                              onClick={() => handleTeamSelection(selection.week, null)}
+                              className="p-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Mobile Status Row */}
+                    <div className="md:hidden flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-300">Result:</span>
+                        {getStatusIcon(selection.status)}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-300">Score:</span>
+                        <span className="font-mono">{selection.score}</span>
+                      </div>
+                    </div>
+
+                    {/* Team Selector Dropdown */}
+                    {isExpanded && (
+                      <div className="mt-4 border-t border-white/20 pt-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                          {nflTeams.map(team => (
+                            <button
+                              key={team.id}
+                              onClick={() => handleTeamSelection(selection.week, team.id)}
+                              className={`flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
+                                selectedTeam?.id === team.id
+                                  ? 'bg-blue-600/30 border border-blue-500'
+                                  : 'bg-white/5 hover:bg-white/10'
+                              }`}
+                            >
+                              <img 
+                                src={team.logo_url} 
+                                alt={team.name} 
+                                className="w-8 h-8 object-contain"
+                              />
+                              <span className="font-medium text-sm">{team.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Standings with Member Cards */}
-          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 shadow-2xl min-h-[200px]">
+          <div className="bg-white/5 backdrop-blur-xl p-4 md:p-6 rounded-2xl border border-white/10 shadow-2xl min-h-[200px]">
             <h2 className="text-xl font-semibold mb-4">Standings</h2>
             {loading ? (
               <p className="text-gray-400 text-sm">Loading members...</p>

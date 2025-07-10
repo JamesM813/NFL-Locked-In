@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 import type { profileData } from "@/utils/types"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Camera, X, Upload, CheckCircle } from "lucide-react"
+import { Camera, X, Upload } from "lucide-react"
 import { Dialog } from "@headlessui/react"
 
 export default function Profile() {
@@ -229,7 +229,7 @@ export default function Profile() {
                       />
                       {isSelected && (
                         <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                          <CheckCircle className="w-6 h-6 text-blue-400" />
+                          
                         </div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
