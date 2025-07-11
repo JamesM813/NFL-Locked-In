@@ -36,7 +36,7 @@ export default function Login() {
             },
           },
         });
-        if (error) throw error;
+        if (error) throw new Error('Sign up error. The selected username may be taken or invalid. Please try another.');
         setMessage('Successfully signed up! Check your email for a confirmation link.');
         setIsSignUp(false);
       } else {

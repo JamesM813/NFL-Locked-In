@@ -134,7 +134,10 @@ export default function Dashboard() {
                   </div>
                 ))
               ) : (
-                <p className="text-gray-500">No groups found.</p>
+                <div>
+                  <p className="text-gray-500">No groups found.</p>
+                  <button className="">Join or create a group now!</button>
+                </div>
               )}
             </div>
           </div>

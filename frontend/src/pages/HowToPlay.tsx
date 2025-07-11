@@ -9,36 +9,26 @@ export default function HowToPlay() {
 
         {/* Sections */}
         <Section title="Objective">
-          Your goal is to choose one NFL team each week that you believe will win their game. You need to be careful though, you can only 
-          choose each team once during the regular season! Join a group with 4 to 10 of your friends, and put your prediction knowledge on
-          display!
+          Your goal is to pick one NFL team each week that you think will win their game. However, you can only pick each team <strong>once</strong> during the regular season. Join a group of 4 to 10 friends and show off your football smarts!
         </Section>
 
         <Section title="Rules">
           <ul className="list-disc list-inside space-y-2 text-sm text-gray-200">
-            <li>Select one NFL Team per week to win their matchup that week.</li>
-            <li>If that team wins, you receive points. If they lose you receive no points.</li>
-            <li>Regardless if your selected team wins or loses, you now cannot use that team again, so choose wisely.</li>
-            <li>The amount of points you receive in the event of a win can depend. Check the scoring table below.</li>
-            <li>Get your pick in in time! Some games require a selection before others, check here to see more.</li>
+            <li>Pick <strong>one</strong> NFL team each week to win their game.</li>
+            <li>If your team wins, you earn points. If they lose, you get none.</li>
+            <li>Whether they win or lose, once you've picked a team, you can't pick them again.</li>
+            <li>Your points depend on how many other players picked the same team. For more, see the scoring table.</li>
+            <li>Make sure you submit your pick before the deadline. More details below.</li>
           </ul>
         </Section>
 
         <Section title="Scoring">
           <p className="mb-4">
-             Scoring is based on the number of members in your group, and the amount of those members who have selected the same team as you.
-             The table below shows the amount of points you will receive based on the number of players who picked the same team in the event
-             that the chosen team wins. If the team loses, all players receive 0 points regardless of how many players picked that team.
+            You earn more points when fewer players in your group choose the same team as you. Here's how many points you'll get <strong>if your team wins</strong>:
           </p>
-
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left text-gray-300 border border-gray-600 rounded-lg">
               <thead className="bg-white/10 text-gray-200">
-                <tr>
-                  <th className="px-4 py-2 border-b border-gray-600" colSpan={4}>
-                    Points Earned Based on Group Size and Shared Picks
-                  </th>
-                </tr>
                 <tr>
                   <th className="px-4 py-2 border-b border-gray-600">Group Size</th>
                   <th className="px-4 py-2 border-b border-gray-600">4-5 Players</th>
@@ -48,31 +38,31 @@ export default function HowToPlay() {
               </thead>
               <tbody className="divide-y divide-gray-700">
                 <tr>
-                  <td className="px-4 py-2 font-medium">Only you picked this team</td>
+                  <td className="px-4 py-2 font-medium">Only you picked the team</td>
                   <td className="px-4 py-2">10</td>
                   <td className="px-4 py-2">10</td>
                   <td className="px-4 py-2">10</td>
                 </tr>
-                <tr>
-                  <td className="px-4 py-2 font-medium">2 players picked this team</td>
+                <tr className="bg-white/5">
+                  <td className="px-4 py-2 font-medium">2 players picked the team</td>
                   <td className="px-4 py-2">7</td>
                   <td className="px-4 py-2">8</td>
                   <td className="px-4 py-2">9</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-2 font-medium">3 players picked this team</td>
+                  <td className="px-4 py-2 font-medium">3 players picked the team</td>
                   <td className="px-4 py-2">5</td>
                   <td className="px-4 py-2">6</td>
                   <td className="px-4 py-2">7</td>
                 </tr>
-                <tr>
-                  <td className="px-4 py-2 font-medium">4 players picked this team</td>
+                <tr className="bg-white/5">
+                  <td className="px-4 py-2 font-medium">4 players picked the team</td>
                   <td className="px-4 py-2">3</td>
                   <td className="px-4 py-2">5</td>
                   <td className="px-4 py-2">6</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-2 font-medium">5+ players picked this team</td>
+                  <td className="px-4 py-2 font-medium">5+ players picked the team</td>
                   <td className="px-4 py-2">2</td>
                   <td className="px-4 py-2">4</td>
                   <td className="px-4 py-2">5</td>
@@ -82,57 +72,30 @@ export default function HowToPlay() {
           </div>
         </Section>
 
-        <Section title="Pick Deadlines">
-            <div className="space-y-4 text-sm text-gray-200">
-                <p>
-                Due to the nature of the NFL schedule, some games require picks to be made before others. 
-                For Pick 'Em, we have divided each NFL week into Wave 1 and Wave 2.
-                </p>
-                
-                <p>
-                <strong>Wave 1 games</strong> are any games that are scheduled for Thursday, Friday, or Saturday of that week. 
-                For the most part, Wave 1 games will mostly be Thursday Night Football, but Friday and Saturday games may appear 
-                towards the tail end of the season.
-                </p>
-                
-                <p>
-                <strong>Wave 2 games</strong> are any games that are scheduled for Sunday or Monday of that week.
-                </p>
-                
-                <p className="font-bold text-white">
-                Regardless of when your game takes place in its respective Wave, you must have your pick in by the Wave's deadline!
-                </p>
-                
-                <div className="overflow-x-auto">
-                <table className="min-w-full text-sm text-left text-gray-300 border border-gray-600 rounded-lg">
-                    <thead className="bg-white/10 text-gray-200">
-                    <tr>
-                        <th className="px-4 py-2 border-b border-gray-600">Wave</th>
-                        <th className="px-4 py-2 border-b border-gray-600">Days</th>
-                        <th className="px-4 py-2 border-b border-gray-600">Deadline</th>
-                    </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-700">
-                    <tr>
-                        <td className="px-4 py-2 font-medium">Wave 1</td>
-                        <td className="px-4 py-2">Thursday, Friday, Saturday</td>
-                        <td className="px-4 py-2">7:45 PM ET on Thursday</td>
-                    </tr>
-                    <tr className="bg-white/5">
-                        <td className="px-4 py-2 font-medium">Wave 2</td>
-                        <td className="px-4 py-2">Sunday, Monday</td>
-                        <td className="px-4 py-2">12:30 PM ET on Sunday</td>
-                    </tr>
-                    </tbody>
-                </table>
-                </div>
-                
-                <p className="text-xs text-gray-400 italic">
-                Note: These deadlines are subject to change in the event of rescheduled games, 
-                or alternate time games such as Thanksgiving and Christmas games.
-                </p>
-            </div>
-            </Section>
+        <Section title="Pick Deadlines & Submitting Your Pick">
+          <div className="space-y-4 text-sm text-gray-200">
+            <p>
+              Each game has its own pick deadline, which is <strong>30 minutes before kickoff</strong>.
+              For example:
+              <ul className="list-disc list-inside">
+                <li>1:00 PM game → deadline is 12:30 PM</li>
+                <li>8:20 PM game → deadline is 7:50 PM</li>
+              </ul>
+            </p>
+            <p>
+              To submit your pick, go to your group page and select a team. You can edit your pick up until the deadline. Once it passes, your pick is locked.
+            </p>
+            <p>
+              If a game's deadline has passed, it will no longer be available. So if the Sunday afternoon games have started and you haven't picked yet, you'll only be able to choose from the Sunday night or Monday night games—assuming you haven't already used those teams.
+            </p>
+            <p>
+              If you <strong>don't</strong> submit a pick for the week, you'll get 0 points but won't lose access to any teams.
+            </p>
+            <p className="text-xs text-gray-400 italic">
+              Note: Deadlines may shift for special games, like Thanksgiving, Christmas, or if a game is rescheduled.
+            </p>
+          </div>
+        </Section>
 
         {/* FAQ */}
         <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-md shadow-lg space-y-4">
@@ -182,12 +145,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 const faqItems = [
   {
     question: "Is Pick 'Em only during the regular season?",
-    answer: "Yes, for now Pick 'Em is only avaialable from weeks 1 to 18 of the NFL regular season. We may expand to playoffs in the future.",
+    answer: "Yes, for now Pick 'Em is only available during Weeks 1 through 18 of the NFL regular season. We may expand to include playoffs in the future.",
   },
-  {
-    question: "What happens if I don't get my pick in on time?",
-    answer: `If you have the "Auto Pick" setting enabled, a random team will be selected for you if you do not make your pick before the deadline.
-             Otherwise, you will receive 0 points for that week and will not be able to make a pick. Neither of these options are very good so don't
-             forget to make your pick!`,
-  }
 ]
