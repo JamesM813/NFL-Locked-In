@@ -58,8 +58,6 @@ export default function Groups() {
       setIsLoading(false)
       return
     }
-
-    //TODO check if group is full
     
     const { data: groupData, error: groupDataError} = await supabase
     .from('groups')

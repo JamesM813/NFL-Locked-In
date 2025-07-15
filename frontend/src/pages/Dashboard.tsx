@@ -136,7 +136,12 @@ export default function Dashboard() {
               ) : (
                 <div>
                   <p className="text-gray-500">No groups found.</p>
-                  <button className="">Join or create a group now!</button>
+                  <button
+                    className="px-4 py-2 mt-4 bg-gray-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                    onClick={() => navigator('/create-group')}
+                  >
+                    Join or create a group now!
+                  </button>
                 </div>
               )}
             </div>
