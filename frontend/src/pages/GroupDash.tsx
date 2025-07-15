@@ -35,117 +35,172 @@ export default function GroupDash() {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [confirmationText, setConfirmationText] = useState("");
   const [isLeavingGroup, setIsLeavingGroup] = useState(false);
+  const [selectedWeek, setSelectedWeek] = useState(1);
+  const [loading, setLoading] = useState(true);
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
   const [nflTeams, setNFLTeams] = useState<NFLTeam[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selections, setSelections] = useState<Selection[]>([]);
+  const [groupSelections, setGroupSelections] = useState<{[userId: string]: Selection[]}>({});
   const [showTeamSelector, setShowTeamSelector] = useState<{ [key: number]: boolean }>({});
 
 
-  useEffect(() => {
-    async function fetchInitialData() {
-      const totalWeeks = 18;
-      const initialSelections: Selection[] = Array.from({ length: totalWeeks }, (_, index) => ({
-        week: index + 1,
-        teamId: null,
-        status: 'pending' as const,
-        score: '-'
-      }))
-  
-      try {
+ 
+const fetchInitialData = async () => {
+  const totalWeeks = 18;
+  const initialSelections: Selection[] = Array.from({ length: totalWeeks }, (_, index) => ({
+    week: index + 1,
+    teamId: null,
+    status: 'pending' as const,
+    score: '-'
+  }));
 
-        setSelections(initialSelections);
-        
-        const { data, error } = await supabase
-          .from("user_picks")
-          .select("week, team_id, status, score")
-          .eq("user_id", userInGroupData?.user_id)
-          .eq("group_id", groupId);
-  
-        if (error) {
-          console.error("Error fetching user selections:", error);
-          return;
-        }
-  
-        if (data && data.length > 0) {
-          //eslint-disable-next-line
-          const existingSelections: Selection[] = data.map((item: any) => ({
+  try {
+    setSelections(initialSelections);
+    
+    const { data, error } = await supabase
+      .from("user_picks")
+      .select("week, team_id, status, score")
+      .eq("user_id", userInGroupData?.user_id)
+      .eq("group_id", groupId);
+
+    if (error) {
+      console.error("Error fetching user selections:", error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      //eslint-disable-next-line
+      const existingSelections: Selection[] = data.map((item: any) => ({
+        week: item.week,
+        teamId: item.team_id,
+        status: item.status || 'pending',
+        score: item.score || '-'
+      }));
+      
+      setSelections(prev => prev.map(selection => {
+        const existing = existingSelections.find(s => s.week === selection.week);
+        return existing ? { ...selection, ...existing } : selection;
+      }));
+    }
+  } catch (err) {
+    console.error("Error in fetchInitialData:", err);
+  }
+};
+
+const fetchGroupSelections = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("user_picks")
+      .select("user_id, week, team_id, status, score")
+      .eq("group_id", groupId);
+
+    if (error) {
+      console.error("Error fetching group selections:", error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      const selectionsByUser: {[userId: string]: Selection[]} = {};
+      const currentMembers = groupMembers;   
+      currentMembers.forEach(member => {
+        selectionsByUser[member.user_id] = Array.from({ length: 18 }, (_, index) => ({
+          week: index + 1,
+          teamId: null,
+          status: 'pending' as const,
+          score: '-'
+        }));
+      });
+      //eslint-disable-next-line
+      data.forEach((item: any) => {
+        if (selectionsByUser[item.user_id]) {
+          const weekIndex = item.week - 1;
+          selectionsByUser[item.user_id][weekIndex] = {
             week: item.week,
             teamId: item.team_id,
             status: item.status || 'pending',
             score: item.score || '-'
-          }));
-          
-          
-          setSelections(prev => prev.map(selection => {
-            const existing = existingSelections.find(s => s.week === selection.week);
-            return existing ? { ...selection, ...existing } : selection;
-          }));
+          };
         }
-      } catch (err) {
-        console.error("Error in fetchInitialData:", err);
-      }
+      });
+
+      setGroupSelections(selectionsByUser);
     }
-  
+  } catch (err) {
+    console.error("Error in fetchGroupSelections:", err);
+  }
+};
+
+async function fetchNFLTeams(){
+  const {data, error} = await supabase
+  .from("nfl_teams")
+  .select("*")
+
+  if(error) throw new Error(`Error fetching NFL teams: ${error.message}`);
+  if(data) {
+    //eslint-disable-next-line
+    const teams = data.map((team: any) => ({
+      id: team.id,
+      logo_url: team.logo_url,
+      name: team.name
+    }));
+    setNFLTeams(teams);
+  }
+}
+
+
+async function fetchGroupMembers() {
+  setLoading(true);
+
+  const { data, error } = await supabase
+  .from("profile_groups")
+  .select(`
+    user_id,
+    is_admin,
+    profiles:user_id (
+      id,
+      username,
+      profile_picture_url
+    )
+  `)
+  .eq("group_id", groupId);
+
+  if (error) {
+    console.error("Error fetching group members:", error);
+  } else {
+    const members = data?.map(member => ({
+      user_id: member.user_id,
+      is_admin: member.is_admin,
+      profiles: Array.isArray(member.profiles) ? member.profiles[0] : member.profiles
+    })).filter(member => member.profiles) || [];
+
+    setGroupMembers(members)
+  }
+
+  setLoading(false);
+}
+
+useEffect(() => {
+  fetchNFLTeams();
+}, []);
+
+
+useEffect(() => {
+  fetchGroupMembers();
+}, [groupId]);
+
+
+useEffect(() => {
+  if (userInGroupData?.user_id) {
     fetchInitialData();
-  }, [groupId, userInGroupData?.user_id]); 
+  }
+}, [groupId, userInGroupData?.user_id]);
 
 
-  useEffect(() => {
-    async function fetchNFLTeams(){
-      const {data, error} = await supabase
-      .from("nfl_teams")
-      .select("*")
-
-      if(error) throw new Error(`Error fetching NFL teams: ${error.message}`);
-      if(data) {
-        //eslint-disable-next-line
-        const teams = data.map((team: any) => ({
-          id: team.id,
-          logo_url: team.logo_url,
-          name: team.name
-        }));
-        setNFLTeams(teams);
-      }
-    }
-    fetchNFLTeams()
-  }, [])
-
-  useEffect(() => {
-    async function fetchGroupMembers() {
-      setLoading(true);
-
-      const { data, error } = await supabase
-      .from("profile_groups")
-      .select(`
-        user_id,
-        is_admin,
-        profiles:user_id (
-          id,
-          username,
-          profile_picture_url
-        )
-      `)
-      .eq("group_id", groupId);
-
-      if (error) {
-        console.error("Error fetching group members:", error);
-      } else {
-        const members = data?.map(member => ({
-          user_id: member.user_id,
-          is_admin: member.is_admin,
-          profiles: Array.isArray(member.profiles) ? member.profiles[0] : member.profiles
-        })).filter(member => member.profiles) || [];
-
-        setGroupMembers(members)
-      }
-
-      setLoading(false);
-    }
-
-    fetchGroupMembers();
-
-  }, [groupId, userInGroupData, ]);
+useEffect(() => {
+  if (groupMembers.length > 0) {
+    fetchGroupSelections();
+  }
+}, [groupMembers]); 
 
   if (!userInGroupData) {
     return (
@@ -155,6 +210,7 @@ export default function GroupDash() {
     );
   }
 
+  
   const group = userInGroupData.groups;
   const groupName = group.name
   const groupSize = group.group_size
@@ -330,7 +386,11 @@ export default function GroupDash() {
           duration: 2000,
           position: "top-center",
         });
+        
       }
+      await fetchInitialData();
+      await fetchGroupSelections();
+      
     } catch (error) {
       console.error("Update failed:", error);
       setSelections(prev => prev.map(selection => 
@@ -579,7 +639,7 @@ export default function GroupDash() {
                   {groupMembers.map((member) => (
                     <li
                       key={member.user_id}
-                      className="bg-white/10 p-5 rounded-xl flex items-center gap-4"
+                      className="bg-white/10 p-4 rounded-xl flex items-center gap-4"
                     >
                       <img
                         src={member.profiles.profile_picture_url}
@@ -597,6 +657,94 @@ export default function GroupDash() {
                 </ul>
               )}
             </div>
+          </div>
+        </section>
+
+        {/* Group Picks Overview */}
+        <section className="bg-white/5 backdrop-blur-xl p-4 md:p-6 rounded-2xl border border-white/10 shadow-2xl">
+          <h2 className="text-xl font-semibold mb-4">Group Picks</h2>
+          
+          {/* Week Selector */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <label className="text-sm font-medium text-gray-300">View Week:</label>
+              <select 
+                value={selectedWeek}
+                onChange={(e) => setSelectedWeek(Number(e.target.value))}
+                className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {Array.from({ length: 18 }, (_, i) => (
+                  <option key={i + 1} value={i + 1}>Week {i + 1}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Picks Grid */}
+          <div className="overflow-x-auto">
+            <div className="min-w-full">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+                {groupMembers.map((member) => {
+                  const memberSelections = groupSelections[member.user_id] || [];
+                  const memberWeekPick = memberSelections.find(s => s.week === selectedWeek);
+                  const selectedTeam = memberWeekPick?.teamId ? getSelectedTeam(memberWeekPick.teamId) : null;
+                  
+                  return (
+                    <div key={member.user_id} className="bg-white/10 p-4 rounded-xl border border-white/20">
+                      <div className="flex items-center gap-3 mb-4">
+                        <img
+                          src={member.profiles.profile_picture_url}
+                          alt={member.profiles.username}
+                          className="w-10 h-10 rounded-full object-cover border border-white/20"
+                        />
+                        <div className="flex-grow">
+                          <p className="font-semibold text-sm">{member.profiles.username}</p>
+                          {member.is_admin && (
+                            <p className="text-xs text-yellow-400">Admin</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-300">Record</p>
+                          <p className="font-mono text-sm">{/* TODO add record functionality here */}</p>
+                        </div>
+                      </div>
+
+                      {/* Week Pick */}
+                      <div className="border-t border-white/20 pt-4">
+                        <p className="text-xs text-gray-300 mb-2">Week {selectedWeek} Pick</p>
+                          
+                        {selectedTeam ? (
+                          <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+                            <img 
+                              src={selectedTeam.logo_url} 
+                              alt={selectedTeam.name} 
+                              className="w-8 h-8 object-contain"
+                            />
+                            <div className="flex-grow">
+                              <p className="font-semibold text-sm">{selectedTeam.name}</p>
+                            </div>
+                            <div className="text-right">
+                              {getStatusIcon(memberWeekPick?.status || 'pending')}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg">
+                            <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-400">No pick yet</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+                </div>
+              </div>
           </div>
         </section>
       </div>
