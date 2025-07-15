@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import Header from './Header'
+import Footer from './Footer'
 import { ProfileContext } from '@/context/ProfileContext'
 import { GroupContext } from '@/context/GroupContext'
 import type { profileData, profileGroupData } from '@/utils/types'
@@ -83,8 +84,11 @@ export default function ProtectedLayout() {
       <GroupContext.Provider value={{ groups, refetchGroups }}>
         <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black">
           <Header />
+          
           <main>
+          
             <Outlet />
+            <Footer />
           </main>
         </div>
       </GroupContext.Provider>

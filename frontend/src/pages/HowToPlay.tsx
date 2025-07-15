@@ -104,6 +104,7 @@ export default function HowToPlay() {
         </Section>
 
         {/* FAQ */}
+        <section id="faqs">
         <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-md shadow-lg space-y-4">
           <h2 className="text-2xl font-semibold text-white">FAQs</h2>
           <div className="space-y-2">
@@ -128,6 +129,7 @@ export default function HowToPlay() {
             ))}
           </div>
         </div>
+        </section>
 
         <div className="text-center pt-8">
           <p className="text-sm text-gray-400 italic">
