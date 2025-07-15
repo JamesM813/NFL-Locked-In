@@ -88,7 +88,9 @@ export default function Dashboard() {
       <div className="bg-yellow-500/20 backdrop-blur-sm rounded-xl p-6 shadow-md border border-yellow-500/30">
         <h2 className="text-xl font-semibold text-yellow-300 mb-2">Disclaimer</h2>
         <p className="text-sm text-yellow-200">
-          This website is currently under development. Feel free to look around and explore its features, but note that some functionality may not be fully implemented yet. Check back for updates!
+          This website is currently under development. Feel free to look around and explore its features, 
+          but note that some functionality may not be fully implemented yet. Please feel free to report any
+          bugs to the <a href="/contact" className="underline text-yellow-300">contact page</a>, and check back for updates!
         </p>
       </div>
 
