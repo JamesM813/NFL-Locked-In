@@ -155,4 +155,8 @@ const faqItems = [
     question: "Is Pick 'Em only during the regular season?",
     answer: "Yes, for now Pick 'Em is only available during Weeks 1 through 18 of the NFL regular season. We may expand to include playoffs in the future.",
   },
+  {
+    question: "What happens if the team I selected finishes their game in a tie?",
+    answer: "In the event of a tie, both teams will be considered winners for scoring purposes, due to the nature of the game and unlikelyhood of a tie."
+  }
 ]

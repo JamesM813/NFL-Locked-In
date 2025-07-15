@@ -66,7 +66,7 @@ async function fetchScheduleData(): Promise<void> {
   const url = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?limit=1000&dates=20250101-20251231&seasontype=2'
 
   const teamMap = await getTeamMapping()
-
+  //const YEAR = new Date().getFullYear()
   const res = await fetch(url)
   const data = await res.json() as NFLApiResponse
 
