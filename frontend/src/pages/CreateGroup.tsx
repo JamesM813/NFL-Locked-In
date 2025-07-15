@@ -217,9 +217,6 @@ export default function CreateGroup() {
                 </svg>
               </label>
             </div>
-            {profilePicture && profilePicture.name && !profilePicture.name.startsWith("/preset-") && (
-              <p className="text-xs text-gray-500 mt-2">{profilePicture.name}</p>
-            )}
           </div>
 
           {/* Settings */}

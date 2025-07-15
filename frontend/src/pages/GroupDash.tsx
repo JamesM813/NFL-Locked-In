@@ -156,6 +156,9 @@ export default function GroupDash() {
   }
 
   const group = userInGroupData.groups;
+  const groupName = group.name
+  const groupSize = group.group_size
+  const groupPictureURL = group.group_picture_url || `https://placehold.co/80x80/1f2937/ffffff?text=${groupName.charAt(0)}`
 
   function handleChangeSettings() {
     if (!userInGroupData?.is_admin) {
@@ -179,6 +182,17 @@ export default function GroupDash() {
       return;
     }
   
+    if( groupSize >= 10) {
+      toast.error("Group is full! You cannot invite more members.", {
+        duration: 3000,
+        position: "top-center",
+        style: {
+          background: "#1f2937",
+          color: "#fff",
+        },
+      });
+      return;
+    }
     try {
       const { error: deleteError } = await supabase
         .from("group_join_codes")
@@ -378,12 +392,13 @@ export default function GroupDash() {
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center space-x-4">
             <img
-              src={group.group_picture_url || `https://placehold.co/80x80/1f2937/ffffff?text=${group.name.charAt(0)}`}
-              alt={`${group.name} avatar`}
+              src={groupPictureURL}
+              alt={`${groupName} avatar`}
               className="w-16 h-16 rounded-full border-2 border-white/20 object-cover"
             />
             <div>
-              <h1 className="text-3xl font-bold">{group.name}</h1>
+              <h1 className="text-3xl font-bold">{groupName}</h1>
+              <p className="text-gray-400 text-sm">Group Members: {groupSize}/10</p>
               <p className="text-gray-400 text-sm">Group ID: {group.id}</p>
             </div>
           </div>
@@ -456,18 +471,22 @@ export default function GroupDash() {
                             </div>
                           ) : (
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-600 rounded-full flex items-center justify-center">
-                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
-                              </div>
+                              <button
+                                  className="w-8 h-8 md:w-10 md:h-10 bg-gray-600 rounded-full flex items-center justify-center relative group"
+                                  onClick={() => toggleTeamSelector(selection.week)}
+                                >
+                                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                  </svg>
+                                  <span className="absolute inset-0 rounded-full bg-white/20 scale-0 group-hover:scale-100 transition-transform"></span>
+                                </button>
                               <p className="text-gray-400 text-sm md:text-base">Select Team</p>
                             </div>
                           )}
                         </div>
                       </div>
 
-                      {/* Right side - Status and Actions */}
+                      {/* Status and Actions */}
                       <div className="flex items-center gap-2 md:gap-4">
                         <div className="hidden md:flex items-center gap-4">
                           <div className="text-center">
@@ -595,7 +614,7 @@ export default function GroupDash() {
             
             <div className="space-y-4 mb-6">
               <p className="text-gray-300">
-                Are you sure you want to leave <strong>{group.name}</strong>?
+                Are you sure you want to leave <strong>{groupName}</strong>?
               </p>
               
               <div className="bg-red-600/20 border border-red-600/30 p-4 rounded-xl">

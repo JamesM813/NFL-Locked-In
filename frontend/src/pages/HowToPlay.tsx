@@ -9,7 +9,7 @@ export default function HowToPlay() {
 
         {/* Sections */}
         <Section title="Objective">
-          Your goal is to pick one NFL team each week that you think will win their game. However, you can only pick each team <strong>once</strong> during the regular season. Join a group of 4 to 10 friends and show off your football smarts!
+          Your goal is to pick one NFL team each week that you think will win their game. However, you can only pick each team <strong>once</strong> during the regular season. Join a group of up to 10 friends and show off your football smarts!
         </Section>
 
         <Section title="Rules">
@@ -31,6 +31,7 @@ export default function HowToPlay() {
               <thead className="bg-white/10 text-gray-200">
                 <tr>
                   <th className="px-4 py-2 border-b border-gray-600">Group Size</th>
+                  <th className="px-4 py-2 border-b border-gray-600">4&lt; Players</th>
                   <th className="px-4 py-2 border-b border-gray-600">4-5 Players</th>
                   <th className="px-4 py-2 border-b border-gray-600">6-7 Players</th>
                   <th className="px-4 py-2 border-b border-gray-600">8-10 Players</th>
@@ -42,27 +43,32 @@ export default function HowToPlay() {
                   <td className="px-4 py-2">10</td>
                   <td className="px-4 py-2">10</td>
                   <td className="px-4 py-2">10</td>
+                  <td className="px-4 py-2">10</td>
                 </tr>
                 <tr className="bg-white/5">
                   <td className="px-4 py-2 font-medium">2 players picked the team</td>
+                  <td className="px-4 py-2">6</td>
                   <td className="px-4 py-2">7</td>
                   <td className="px-4 py-2">8</td>
                   <td className="px-4 py-2">9</td>
                 </tr>
                 <tr>
                   <td className="px-4 py-2 font-medium">3 players picked the team</td>
+                  <td className="px-4 py-2">4</td>
                   <td className="px-4 py-2">5</td>
                   <td className="px-4 py-2">6</td>
                   <td className="px-4 py-2">7</td>
                 </tr>
                 <tr className="bg-white/5">
                   <td className="px-4 py-2 font-medium">4 players picked the team</td>
+                  <td className="px-4 py-2">-</td>
                   <td className="px-4 py-2">3</td>
                   <td className="px-4 py-2">5</td>
                   <td className="px-4 py-2">6</td>
                 </tr>
                 <tr>
                   <td className="px-4 py-2 font-medium">5+ players picked the team</td>
+                  <td className="px-4 py-2">-</td>
                   <td className="px-4 py-2">2</td>
                   <td className="px-4 py-2">4</td>
                   <td className="px-4 py-2">5</td>

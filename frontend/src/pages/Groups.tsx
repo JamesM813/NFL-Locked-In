@@ -59,7 +59,20 @@ export default function Groups() {
       return
     }
 
+    //TODO check if group is full
+    
+    const { data: groupData, error: groupDataError} = await supabase
+    .from('groups')
+    .select('group_size')
+    .eq('id', joinCodeData.group_id)
+    .single()
 
+    if(groupDataError) setErrorMessage("Failed to retrieve group data. Please try again later.")
+    if (groupData && groupData.group_size >= 10) {
+      setErrorMessage("This group is already full. Please try another group.")
+      setIsLoading(false)
+      return
+    }
 
     if (joinCodeData.join_code == joinCode) {
 
@@ -157,6 +170,7 @@ export default function Groups() {
                         />
                         <div>
                           <h3 className="text-lg font-semibold">{group.groups.name}</h3>
+                          <p className="text-gray-400 text-sm">Group Members: {group.groups.group_size}/10</p>
                           <p className="text-sm text-gray-400">Group ID: {group.groups.id}</p>
                         </div>
                       </div>
