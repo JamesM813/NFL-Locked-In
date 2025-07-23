@@ -7,6 +7,7 @@ export default function CreateGroup() {
   const [groupName, setGroupName] = useState("");
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [allowInvites, setAllowInvites] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -41,8 +42,7 @@ export default function CreateGroup() {
         } else {
           console.log("Uploading custom file:", profilePicture.name, "Size:", profilePicture.size);
           
-          // Validate file before upload
-          if (profilePicture.size > 50 * 1024 * 1024) { // 5MB limit
+          if (profilePicture.size > 50 * 1024 * 1024) { 
             throw new Error("File size must be less than 5MB");
           }
 
@@ -92,7 +92,8 @@ export default function CreateGroup() {
           name: groupName,
           group_picture_url: profilePictureUrl ?? 'https://b.fssta.com/uploads/application/nfl/headshots/327798.vresize.350.350.medium.7.png',
           allow_invites: allowInvites,
-          admin_id: user.id
+          admin_id: user.id,
+          is_public: isPublic
         })
         .select()
         .single();
@@ -180,7 +181,6 @@ export default function CreateGroup() {
               Profile Picture
             </label>
             <div className="grid grid-cols-4 gap-4">
-              {/* Preset Images */}
               {[1, 2, 3].map((i) => {
                 const presetUrl = supabase
                 .storage
@@ -223,10 +223,29 @@ export default function CreateGroup() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-gray-300">
-                  Allow Invites
-                </div>
-                <p className="text-xs text-gray-500">Members can invite others</p>
+                <div className="text-sm font-medium text-gray-300">Public</div>
+                <p className="text-xs text-gray-500">Allow any user to join this group without an invite code</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {setIsPublic(!isPublic); console.log(isPublic)}}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
+                  isPublic ? 'bg-blue-500' : 'bg-gray-600'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
+                    isPublic ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-300">Allow Invites</div>
+                <p className="text-xs text-gray-500">All group members can create an invite code</p>
               </div>
               <button
                 type="button"
@@ -242,7 +261,6 @@ export default function CreateGroup() {
                 />
               </button>
             </div>
-          </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col space-y-3 pt-4">

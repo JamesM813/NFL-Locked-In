@@ -1,10 +1,10 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useGroup } from "@/context/GroupContext"
 import { useProfile } from "@/context/ProfileContext"
 import { Plus, X } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/lib/supabase"
-
+import { toast } from 'react-hot-toast'
 
 export default function Groups() {
 
@@ -20,6 +20,46 @@ export default function Groups() {
   const [joinCode, setJoinCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+  //eslint-disable-next-line
+  const [publicGroups, setPublicGroups] = useState<any[]>([])
+
+  useEffect(() => {
+    async function fetchGroups() {
+
+      const { data: userGroupData, error: userError } = await supabase
+        .from('profile_groups')
+        .select('*')
+        .eq('user_id', profile?.id)
+  
+      if (userError) {
+        console.error("Error fetching user groups:", userError)
+        return
+      }
+      //setUserGroups(userGroupData || [])
+  
+      const userGroupIds = new Set(userGroupData?.map(pg => pg.group_id))
+      
+      const { data: publicGroupData, error: publicError } = await supabase
+        .from('groups')
+        .select('*')
+        .eq('is_public', true)
+        .lt('group_size', 10)
+  
+      if (publicError) {
+        console.error("Error fetching public groups:", publicError)
+        return
+      }
+
+      const filteredGroups = publicGroupData?.filter(group => !userGroupIds.has(group.id)) || []
+  
+      setPublicGroups(filteredGroups)
+    }
+  
+    refetchGroups()
+    if (profile?.id) {
+      fetchGroups()
+    }
+  }, [profile?.id])
 
   function handleCreateGroup() {
     navigator('/create-group')
@@ -30,6 +70,30 @@ export default function Groups() {
     setErrorMessage("")
     setJoinCode("")
   }
+
+  async function handlePublicJoin(groupId: string) {
+    setIsLoading(true)
+    setErrorMessage("")
+  
+    try {
+  
+      const { error: insertError } = await supabase
+        .from('profile_groups')
+        .insert({ user_id: profile?.id, group_id: groupId })
+  
+      if (insertError) throw new Error("Failed to join group.")
+  
+      await refetchGroups()
+      navigator(`/group/${groupId}`)
+      toast.success("You successfully joined the group!", { duration: 3000, position: "top-center", style: { background: "#1f2937", color: "#fff", }});
+    //eslint-disable-next-line
+    } catch (err: any) {
+      setErrorMessage(err.message || "An unexpected error occurred.")
+    }
+  
+    setIsLoading(false)
+  }
+  
 
   async function handleJoinSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -152,6 +216,7 @@ export default function Groups() {
             {groups && groups.length > 0 ? (
               <ul className="space-y-3">
                 {groups.map((group) => (
+                  
                   <li key={group.id}>
                     <button
                       onClick={() => navigator(`/group/${group.group_id}`)}
@@ -183,12 +248,45 @@ export default function Groups() {
             )}
             </div>
 
-            {/* Placeholder for future section */}
+            {/* Public groups */}
             <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/10 min-h-[300px]">
-              <h2 className="text-xl font-semibold mb-4">Group Activity</h2>
+              <h2 className="text-xl font-semibold mb-4">Public Groups</h2>
+              { publicGroups && publicGroups.length > 0 ? (
+                  <ul className="space-y-3">
+                  {publicGroups.map((group) => (
+
+                    <li key={group.id}>
+                      <button
+                        onClick={() => handlePublicJoin(group.id)}
+                        className="w-full text-left p-4 bg-white/10 rounded-lg hover:bg-white/20 transition-colors cursor-pointer"
+                        disabled={isLoading}
+                      >
+                        <div className="flex items-center space-x-4">
+                          <img
+                            src={
+                              group.group_picture_url ||
+                              `https://placehold.co/64x64/1f2937/ffffff?text=${group.name.charAt(0)}`
+                            }
+                            alt={`${group.name} picture`}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-white/20"
+                          />
+                          <div>
+                            <h3 className="text-lg font-semibold">{group.name}</h3>
+                            <p className="text-gray-400 text-sm">Group Members: {group.group_size}/10</p>
+                            <p className="text-sm text-gray-400">Group ID: {group.id}</p>
+                          </div>
+                        </div>
+                      </button>
+                    </li>
+
+                  ))}
+                </ul>
+              ) : 
+              (
               <div className="flex items-center justify-center h-full text-gray-500">
-                <p>Activity feed coming soon...</p>
+                <p>No public groups found!</p>
               </div>
+              )}
             </div>
           </section>
         </div>
@@ -212,7 +310,7 @@ export default function Groups() {
               <input
                 type="text"
                 value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.replace(/\D/g, ''))} // Only allow digits
+                onChange={(e) => setJoinCode(e.target.value.replace(/\D/g, ''))} 
                 maxLength={6}
                 className="w-full text-center text-3xl text-white tracking-[0.5em] font-mono bg-white/5 border border-white/10 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 placeholder="000000"
