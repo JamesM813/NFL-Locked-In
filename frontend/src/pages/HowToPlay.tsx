@@ -156,7 +156,27 @@ const faqItems = [
     answer: "Yes, for now Pick 'Em is only available during Weeks 1 through 18 of the NFL regular season. We may expand to include playoffs in the future.",
   },
   {
+    question: "Can I join multiple groups?",
+    answer: "Yes! You can join or create multiple groups and compete separately in each. Your picks and scores are tracked independently per group, so you can have different strategies and teams in each one.",
+  },
+  {
+    question: "When do scores update?",
+    answer: "You should see scores update within 15-30 minutes after the game ends. If you notice a significant delay, please reach out via the contact page."
+  },
+  {
     question: "What happens if the team I selected finishes their game in a tie?",
     answer: "In the event of a tie, both teams will be considered winners for scoring purposes, due to the nature of the game and unlikelyhood of a tie."
-  }
+  },
+  {
+    question: "What happens if a game is postponed or canceled and I didn't change my pick in time?",
+    answer: "If the game is postponed to a later date, your pick will stay active for that rescheduled game. If it's canceled and not played at all, that pick will be voided and you'll be able to reuse that team in a future week.",
+  },
+  {
+    question: "Will I eventually run out of teams?",
+    answer: "Since you only choose one team per week, it is impossible to run out of teams! By the final week, you should have 15 teams to choose from, possibly more if you forget to make a pick in a week.",
+  },
+  {
+    question: "What if there is a tie for first place at the end of the season?",
+    answer: "Thats up to you! You can decide to split the prize, have a tiebreaker game, or whatever you and your group agree on. Pick 'Em doesn't enforce any rules for ties at the end of the season.",
+  },
 ]

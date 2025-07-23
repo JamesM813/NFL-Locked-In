@@ -49,7 +49,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="mt-12 pt-6 border-t border-white/10 text-center">
           <p className="text-gray-500 text-xs">
-            &copy; {currentYear} NFL Pick 'Em. Not affiliated with the NFL.
+            {currentYear} NFL Pick 'Em. Not affiliated with the NFL. Used only for non-commercial purposes.
           </p>
         </div>
       </div>

@@ -12,16 +12,20 @@ export default function Dashboard() {
   if (!groupContext) throw new Error("useGroup must be used within a GroupProvider")
   if (!profileContext) throw new Error("useProfile must be used within a ProfileProvider")
   const { profile, refetchProfiles } = profileContext
-  const { groups } = groupContext 
+  const { groups, refetchGroups } = groupContext 
 
   const [loading, setLoading] = useState(false)
   const [news, setNews] = useState<{id: string, title: string, source: string, time: string, type: string, image: string, url: string}[]>([])
 
   useEffect(() => {
-    async function fetchProfile() {
+    async function refetchData() {
+
       await refetchProfiles()
+      await refetchGroups()
+
     }
-    fetchProfile()
+
+    refetchData()
   }
   , [])
 
@@ -89,8 +93,9 @@ export default function Dashboard() {
         <h2 className="text-xl font-semibold text-yellow-300 mb-2">Disclaimer</h2>
         <p className="text-sm text-yellow-200">
           This website is currently under development. Feel free to look around and explore its features, 
-          but note that some functionality may not be fully implemented yet. Please feel free to report any
-          bugs to the <a href="/contact" className="underline text-yellow-300">contact page</a>, and check back for updates!
+          but note that some functionality may not be fully implemented yet. If you encounter any issues or have any comments
+          or suggestions, please reach out at our <a href="/contact" className="underline text-yellow-300">contact page</a>, 
+          and check back for updates!
         </p>
       </div>
 

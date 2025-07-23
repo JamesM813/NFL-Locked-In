@@ -216,12 +216,12 @@ export default function Schedule() {
                     <div className="text-right">
                       <p className="text-sm text-gray-400">Status: {game.status}</p>
                       {game.winner_id && (
-                        <p className="text-sm text-green-400">Winner ID: {game.winner_id}</p>
+                        <p className="text-sm text-green-400">Winner: {teamNameMap.get(game.winner_id)}</p>
                       )}
                     </div>
                   </div>
                   <div className="text-xs text-gray-500">
-                    Wave: {game.wave}
+                    Game ID: {game.api_game_id}
                   </div>
                 </div>
               </CardContent>

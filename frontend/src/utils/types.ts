@@ -28,6 +28,7 @@ export type groupData = {
     name: string
     group_picture_url: string
     allow_invites: boolean
+    is_public: boolean
     admin_id: string
     group_size: number
 }
@@ -49,4 +50,17 @@ export type GroupMember = {
       username: string;
       profile_picture_url: string;
     };
+  }
+
+export type NFLTeam = {
+    id: string;
+    logo_url: string;
+    name: string;
+  }
+  
+export type Selection = {
+    week: number;
+    teamId: string | null;
+    status: 'win' | 'loss' | 'pending';
+    score: string;
   }

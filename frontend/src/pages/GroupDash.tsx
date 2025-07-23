@@ -1,22 +1,9 @@
 import { useGroup } from "@/context/GroupContext";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import type { GroupMember } from "@/utils/types";
+import type { GroupMember, NFLTeam, Selection } from "@/utils/types";
 import { supabase } from "@/lib/supabase";
 import { toast } from "react-hot-toast";
-
-interface NFLTeam {
-  id: string;
-  logo_url: string;
-  name: string;
-}
-
-interface Selection {
-  week: number;
-  teamId: string | null;
-  status: 'win' | 'loss' | 'pending';
-  score: string;
-}
 
 export default function GroupDash() {
   const { groupId } = useParams();
@@ -28,11 +15,12 @@ export default function GroupDash() {
     throw new Error("Group ID is required");
   }
 
-  const { groups } = groupContext;
+  const { groups, refetchGroups } = groupContext;
   const userInGroupData = groups?.find((group) => group.group_id === Number(groupId));
 
   const [leaveGroupMessage, setLeaveGroupMessage] = useState("")
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [confirmationText, setConfirmationText] = useState("");
   const [isLeavingGroup, setIsLeavingGroup] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(1);
@@ -42,8 +30,14 @@ export default function GroupDash() {
   const [selections, setSelections] = useState<Selection[]>([]);
   const [groupSelections, setGroupSelections] = useState<{[userId: string]: Selection[]}>({});
   const [showTeamSelector, setShowTeamSelector] = useState<{ [key: number]: boolean }>({});
-
-
+  const [isSubmittingSettings, setIsSubmittingSettings] = useState(false);
+  const [isPublicGroup, setIsPublicGroup] = useState(false);
+  // Settings form state
+  const [settingsForm, setSettingsForm] = useState({
+    groupName: '',
+    isPublic: false,
+  });
+  
  
 const fetchInitialData = async () => {
   const totalWeeks = 18;
@@ -202,6 +196,21 @@ useEffect(() => {
   }
 }, [groupMembers]); 
 
+// Initialize settings form when group data is available
+useEffect(() => {
+  if (userInGroupData?.groups) {
+    const group = userInGroupData.groups;
+
+    setIsPublicGroup(group.is_public || false);
+    setSettingsForm({
+      groupName: group.name || '',
+      isPublic: isPublicGroup
+    });
+
+    
+  }
+}, [userInGroupData]);
+
   if (!userInGroupData) {
     return (
       <div className="p-6 text-white text-center">
@@ -210,7 +219,6 @@ useEffect(() => {
     );
   }
 
-  
   const group = userInGroupData.groups;
   const groupName = group.name
   const groupSize = group.group_size
@@ -221,7 +229,67 @@ useEffect(() => {
       alert("You do not have permission to change group settings! Ask your group's admin to do this.");
       return;
     } else {
-      console.log("Change group settings clicked");
+      setShowSettingsModal(true);
+    }
+  }
+
+  function handleCloseSettingsModal() {
+    setShowSettingsModal(false);
+    // Reset form to original values
+    if (userInGroupData?.groups) {
+      const group = userInGroupData.groups;
+      setSettingsForm({
+        groupName: group.name || '',
+        isPublic: group.is_public || false,
+      });
+    }
+  }
+
+  async function handleSubmitSettings(e: React.FormEvent) {
+    e.preventDefault();
+    setIsSubmittingSettings(true);
+
+    try {
+      console.log(isPublicGroup)
+      const {data, error} = await supabase
+        .from('groups')
+        .update({
+          name: settingsForm.groupName,
+          is_public: isPublicGroup,
+        })
+        .eq('id', groupId)
+        .select()
+      
+      if (error) {
+        throw error;
+      }
+
+      console.log(data)
+      console.log(await supabase.auth.getUser(), group.admin_id)
+      toast.success("Group settings updated successfully!", {
+        duration: 3000,
+        position: "top-center",
+        style: {
+          background: "#1f2937",
+          color: "#fff",
+        },
+      });
+
+      await refetchGroups()
+      setShowSettingsModal(false);
+
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      toast.error("Failed to update settings. Please try again.", {
+        duration: 3000,
+        position: "top-center",
+        style: {
+          background: "#1f2937",
+          color: "#fff",
+        },
+      });
+    } finally {
+      setIsSubmittingSettings(false);
     }
   }
 
@@ -507,10 +575,9 @@ useEffect(() => {
                     key={selection.week}
                     className="bg-white/10 p-4 rounded-xl border border-white/20"
                   >
-                    {/* Main Selection Row */}
+
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        {/* Week Display */}
                         <div className="flex-shrink-0 w-12 text-center">
                           <p className="text-sm font-medium text-gray-300">Week</p>
                           <p className="text-lg font-bold">{selection.week}</p>
@@ -626,7 +693,7 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* Standings with Member Cards */}
+          {/* Standings */}
           <div className="bg-white/5 backdrop-blur-xl p-4 md:p-6 rounded-2xl border border-white/10 shadow-2xl">
             <h2 className="text-xl font-semibold mb-4">Standings</h2>
             <div className="max-h-96 overflow-y-auto">
@@ -748,6 +815,88 @@ useEffect(() => {
           </div>
         </section>
       </div>
+      
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-white">Group Settings</h2>
+            </div>
+
+            <form onSubmit={handleSubmitSettings} className="space-y-6">
+              {/* Group Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Group Name
+                </label>
+                <input
+                  type="text"
+                  value={settingsForm.groupName}
+                  onChange={(e) => setSettingsForm(prev => ({ ...prev, groupName: e.target.value }))}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter group name"
+                  required
+                />
+              </div>
+
+            
+
+              {/* Privacy Settings */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-3">
+                  Privacy Settings
+                </label>
+                <div className="space-y-3">
+                  <label className="flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setIsPublicGroup(!isPublicGroup)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
+                      isPublicGroup ? 'bg-blue-500' : 'bg-gray-600'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
+                        isPublicGroup ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                    <span className="ml-3 text-sm text-gray-300">
+                      {isPublicGroup ? "Click to make the group private" : "Click to make the group public"}
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCloseSettingsModal}
+                  disabled={isSubmittingSettings}
+                  className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingSettings || !settingsForm.groupName.trim()}
+                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingSettings ? "Saving..." : "Save Settings"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       
       {/* Leave Group Modal */}
       {showLeaveModal && (
