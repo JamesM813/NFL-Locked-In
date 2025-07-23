@@ -169,7 +169,7 @@ const faqItems = [
   },
   {
     question: "What happens if a game is postponed or canceled and I didn't change my pick in time?",
-    answer: "If the game is postponed to a later date, your pick will stay active for that rescheduled game. If it's canceled and not played at all, that pick will be voided and you'll be able to reuse that team in a future week.",
+    answer: "If the game is postponed to a later date, your pick will stay active for that rescheduled game. If it's canceled and not played at all, that pick will be voided and you'll be able to reuse that team in a future week. If you encounter any issues with this please let us know in the contact form.",
   },
   {
     question: "Will I eventually run out of teams?",
