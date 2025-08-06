@@ -57,6 +57,7 @@ export default function ContactPage() {
               type="text"
               id="name"
               value={formData.name}
+              placeholder='John Smith'
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
@@ -71,6 +72,7 @@ export default function ContactPage() {
               type="email"
               id="email"
               value={formData.email}
+              placeholder='johnsmith@gmail.com'
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
@@ -85,6 +87,7 @@ export default function ContactPage() {
               id="message"
               rows={4}
               value={formData.message}
+              placeholder='Your message here. Maybe something like: This app is the best! How can I donate large sums finacially?'
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
               className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required

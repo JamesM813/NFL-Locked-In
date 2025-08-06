@@ -103,11 +103,12 @@ export default function HowToPlay() {
           </div>
         </Section>
 
-        <Section title='Report a Bug'>
+        <Section title='Feedback & Bugs'>
           <div className="space-y-4 text-sm text-gray-200">
             <p>
-              If you encounter any issues or bugs while playing, please let us know so we can fix them! This is a passion project, so some issues are expected to arise. If you find
-              a problem, you can report bugs through the <a href="/contact" className="text-blue-400 hover:underline">contact form</a> on our website.
+              Have a great idea that can improve Pick 'Em? Encounter an annoying bug thats ruining your experience? Just want to give your compliments to the chef?
+              Feel free to reach out for any reason at our <a href="/contact" className="text-blue-400 hover:underline">contact form</a>, and we'll get back to you as
+              soon as we can! This project wouldn't be possible without you!
             </p>
           </div>
         </Section>
