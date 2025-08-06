@@ -103,6 +103,14 @@ export default function HowToPlay() {
           </div>
         </Section>
 
+        <Section title='Report a Bug'>
+          <div className="space-y-4 text-sm text-gray-200">
+            <p>
+              If you encounter any issues or bugs while playing, please let us know so we can fix them! This is a passion project, so some issues are expected to arise. If you find
+              a problem, you can report bugs through the <a href="/contact" className="text-blue-400 hover:underline">contact form</a> on our website.
+            </p>
+          </div>
+        </Section>
         {/* FAQ */}
         <section id="faqs">
         <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-md shadow-lg space-y-4">
@@ -158,6 +166,10 @@ const faqItems = [
   {
     question: "Can I join multiple groups?",
     answer: "Yes! You can join or create multiple groups and compete separately in each. Your picks and scores are tracked independently per group, so you can have different strategies and teams in each one.",
+  },
+  {
+    question: "Why can't I see some teams in the team selector?",
+    answer: "There could be a few reasons. The team may be past its selection time (30 minutes before kickoff), you may have used them already, or they may be on bye."
   },
   {
     question: "When do scores update?",

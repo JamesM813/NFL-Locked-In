@@ -63,4 +63,5 @@ export type Selection = {
     teamId: string | null;
     status: 'win' | 'loss' | 'pending';
     score: string;
+    locks_at: Date | null;
   }

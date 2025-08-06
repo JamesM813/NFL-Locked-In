@@ -5,6 +5,7 @@ import Header from './Header'
 import Footer from './Footer'
 import { ProfileContext } from '@/context/ProfileContext'
 import { GroupContext } from '@/context/GroupContext'
+import {LoadingSpinner} from "./LoadingSpinner";
 import type { profileData, profileGroupData } from '@/utils/types'
 
 export default function ProtectedLayout() {
@@ -74,7 +75,7 @@ export default function ProtectedLayout() {
     fetchUserAndGroups()
   }, [])
 
-  if (loading) return <div className="text-white p-6">Loading...</div>
+  if (loading) return <LoadingSpinner />;
 
   return (
     <ProfileContext.Provider value={{ 

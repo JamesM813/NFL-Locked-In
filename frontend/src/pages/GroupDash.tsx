@@ -37,7 +37,8 @@ export default function GroupDash() {
     fetchNFLTeams,
     fetchGroupMembers,
     fetchInitialData,
-    fetchGroupSelections
+    fetchGroupSelections,
+    getAvailableTeamsForWeek
   } = useGroupData(groupId, userInGroupData?.user_id);
 
   const {
@@ -51,6 +52,7 @@ export default function GroupDash() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showTeamSelector, setShowTeamSelector] = useState<{ [key: number]: boolean }>({});
   const [selectedWeek, setSelectedWeek] = useState(1);
+  const [currentWeek, setCurrentWeek] = useState(1);
   
   // Leave group modal state
   const [leaveGroupMessage, setLeaveGroupMessage] = useState("");
@@ -65,6 +67,20 @@ export default function GroupDash() {
   });
 
   // Effects
+  useEffect(() => {
+    async function fetchCurrentWeek(){
+      const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard')
+      if (!response.ok) {
+        console.error('Failed to fetch NFL current week');
+        return;
+      }
+      const data = await response.json();
+      const curWeek = data?.week?.number || 1;
+      setCurrentWeek(curWeek);
+    }
+    fetchCurrentWeek()
+  })
+
   useEffect(() => {
     fetchNFLTeams();
   }, [fetchNFLTeams]);
@@ -150,10 +166,11 @@ export default function GroupDash() {
       if (teamId) {
         const { data: gameData, error: gameError } = await supabase
           .from('nfl_schedule')
-          .select('api_game_id')
+          .select('api_game_id, locks_at')
           .eq('week', week)
           .or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
           .single();
+
 
         if (gameError || !gameData) {
           throw new Error('No game found for this team/week. Are they on bye?');
@@ -168,7 +185,8 @@ export default function GroupDash() {
             team_id: teamId,
             game_id: gameData.api_game_id,
             status: 'pending',
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            locks_at: gameData.locks_at
           }, {
             onConflict: 'user_id,group_id,week'
           })
@@ -287,7 +305,8 @@ export default function GroupDash() {
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SelectionsList
             selections={selections}
-            nflTeams={nflTeams}
+            currentWeek={currentWeek}
+            getAvailableTeamsForWeek={getAvailableTeamsForWeek}
             showTeamSelector={showTeamSelector}
             onToggleTeamSelector={toggleTeamSelector}
             onTeamSelection={handleTeamSelection}

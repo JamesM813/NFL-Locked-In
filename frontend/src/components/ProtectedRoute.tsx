@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "@/lib/supabase"
 import { Navigate, Outlet } from "react-router-dom"
+import { LoadingSpinner } from "./LoadingSpinner"
 
 export default function ProtectedRoute(){
     const [user, setUser] = useState<User | null>(null)
@@ -15,7 +16,7 @@ export default function ProtectedRoute(){
     }, [])
 
     if (loading) {
-        return <div>Loading...</div>
+        return <LoadingSpinner />
     }
 
     // If a user exists, render the nested routes. Otherwise, navigate to login.
