@@ -3,7 +3,7 @@ async function test(){
     const SEASON_TYPE = 2;
     const URL = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${YEAR}&seasontype=${SEASON_TYPE}&week=`
     
-    for(let week = 1; week <= 2; week++) {
+    for(let week = 1; week <= 19; week++) {
         const response = await fetch(`${URL}${week}`)
         if(!response.ok) { console.error ('Failed connection')}
         const data = await response.json()

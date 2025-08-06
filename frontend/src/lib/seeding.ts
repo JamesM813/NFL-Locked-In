@@ -18,7 +18,7 @@ interface Game {
 
 interface NFLApiResponse {
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
-    events: any[]
+  events: any[]
 }
 
 async function getTeamMapping(): Promise<Map<string, string>> {
@@ -41,40 +41,12 @@ async function getTeamMapping(): Promise<Map<string, string>> {
   return teamMap
 }
 
-function parseGameName(gameName: string): { away: string, home: string } {
-  const parts = gameName.split(' at ')
-  if (parts.length === 2) {
-    return {
-      away: parts[0].trim(),
-      home: parts[1].trim()
-    }
-  }
-  
-  const vsMatch = gameName.match(/(.+) vs (.+)/)
-  if (vsMatch) {
-    return {
-      away: vsMatch[1].trim(),
-      home: vsMatch[2].trim()
-    }
-  }
-  
-  console.warn(`Could not parse game name: ${gameName}`)
-  return { away: '', home: '' }
-}
-
 async function fetchScheduleData(): Promise<void> {
-  const url = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?limit=1000&dates=20250101-20251231&seasontype=2'
+  const YEAR = 2025;
+  const SEASON_TYPE = 2; 
+  const BASE_URL = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${YEAR}&seasontype=${SEASON_TYPE}&week=`
 
   const teamMap = await getTeamMapping()
-  //const YEAR = new Date().getFullYear()
-  const res = await fetch(url)
-  const data = await res.json() as NFLApiResponse
-
-  if (!data.events) {
-    console.error('No events found')
-    return
-  }
-
   const seen = new Set<string>()
   const weeks: Record<number, Game[]> = {}
 
@@ -82,53 +54,60 @@ async function fetchScheduleData(): Promise<void> {
     weeks[i] = []
   }
 
-  for (const game of data.events) {
-    const season = game.season || {}
-    const weekInfo = game.week || {}
+  for(let week = 1; week <= 19; week++) {
+    console.log(`Fetching week ${week}...`)
+    
+    const response = await fetch(`${BASE_URL}${week}`)
+    if(!response.ok) { 
+      console.error(`Failed to fetch week ${week}`)
+      continue
+    }
+    
+    const data = await response.json() as NFLApiResponse
 
-    if (season.year === 2025 && season.slug === 'regular-season') {
-      const gameId = game.id
-      const gameWeek = weekInfo.number
+    if (!data.events) {
+      console.log(`No events found for week ${week}`)
+      continue
+    }
+
+    for(const event of data.events) {
+      const gameId = event.id
+      const gameWeek = event.week?.number
 
       if (!gameId || !gameWeek || seen.has(gameId)) continue
       seen.add(gameId)
 
-      const { away, home } = parseGameName(game.name || '')
-      
-      const homeTeamId = teamMap.get(home)
-      const awayTeamId = teamMap.get(away)
+      const homeTeam = event.competitions[0].competitors[0].team.displayName
+      const awayTeam = event.competitions[0].competitors[1].team.displayName
+
+      const homeTeamId = teamMap.get(homeTeam)
+      const awayTeamId = teamMap.get(awayTeam)
 
       if (!homeTeamId || !awayTeamId) {
-        console.warn(`Could not find team IDs for: ${away} at ${home}`)
+        console.warn(`Could not find team IDs for: ${awayTeam} at ${homeTeam}`)
         continue
       }
 
-      let wave: number = 0
-
-      if( 4 <= new Date(game.date).getDay() && new Date(game.date).getDay()  <= 6 ){
-        wave = 1
-      } else {
-        wave = 2
-      }
-
-      if(wave === 0) throw new Error(`Invalid wave for game ${gameId} on ${game.date}`)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const winner = event.competitions[0].competitors.find((team: any) => team.winner === true)?.team.displayName || null
+      const winnerId = winner ? teamMap.get(winner) || null : null
 
       const gameObj: Game = {
         api_game_id: gameId,
         home_team_id: homeTeamId,
         away_team_id: awayTeamId,
-        game_time: game.date || '',
-        status: game.status?.type?.description || '',
+        game_time: event.date || '',
+        status: event.status?.type?.description || '',
         week: gameWeek,
-        locks_at: new Date(new Date(game.date).getTime() - 30 * 60000).toISOString(),
-        winner_id: null 
+        locks_at: new Date(new Date(event.date).getTime() - 30 * 60000).toISOString(),
+        winner_id: winnerId
       }
 
       weeks[gameWeek].push(gameObj)
 
+      console.log(`Game ID: ${gameId}, Week: ${gameWeek}, Home Team: ${homeTeam}, Away Team: ${awayTeam}, Winner: ${winner || 'TBD'}`);
 
-
-      const {  error } = await supabase
+      const { error } = await supabase
         .from('nfl_schedule')
         .upsert(gameObj, { 
           onConflict: 'api_game_id' 
