@@ -12,7 +12,7 @@ interface Game {
   game_time: string
   status: string
   week: number
-  wave: number
+  locks_at: string
   winner_id?: string | null
 }
 
@@ -120,11 +120,13 @@ async function fetchScheduleData(): Promise<void> {
         game_time: game.date || '',
         status: game.status?.type?.description || '',
         week: gameWeek,
-        wave: wave,
+        locks_at: new Date(new Date(game.date).getTime() - 30 * 60000).toISOString(),
         winner_id: null 
       }
 
       weeks[gameWeek].push(gameObj)
+
+
 
       const {  error } = await supabase
         .from('nfl_schedule')

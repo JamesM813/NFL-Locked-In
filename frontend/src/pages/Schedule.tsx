@@ -220,6 +220,9 @@ export default function Schedule() {
                       )}
                     </div>
                   </div>
+                  <div className='text-xs text-gray-500'>
+                    Game locks at: {new Date(game.locks_at).toLocaleString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true})}
+                  </div>
                   <div className="text-xs text-gray-500">
                     Game ID: {game.api_game_id}
                   </div>

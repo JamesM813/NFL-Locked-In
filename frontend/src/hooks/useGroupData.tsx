@@ -1,17 +1,62 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import type { GroupMember, NFLTeam, Selection } from "../utils/types";
+/* eslint-disable */
+import { useState, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import type { GroupMember, NFLTeam, Selection } from '@/utils/types';
 
-export function useGroupData(groupId: string, userInGroupData: any) {
+export function useGroupData(groupId: string, userId?: string) {
   const [loading, setLoading] = useState(true);
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
   const [nflTeams, setNFLTeams] = useState<NFLTeam[]>([]);
   const [selections, setSelections] = useState<Selection[]>([]);
   const [groupSelections, setGroupSelections] = useState<{[userId: string]: Selection[]}>({});
-  const [leaveGroupMessage, setLeaveGroupMessage] = useState("");
 
-  const fetchInitialData = async () => {
+  const fetchNFLTeams = useCallback(async () => {
+    const {data, error} = await supabase
+      .from("nfl_teams")
+      .select("*");
+
+    if(error) throw new Error(`Error fetching NFL teams: ${error.message}`);
+    if(data) {
+      const teams = data.map((team: any) => ({
+        id: team.id,
+        logo_url: team.logo_url,
+        name: team.name
+      }));
+      setNFLTeams(teams);
+    }
+  }, []);
+
+  const fetchGroupMembers = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("profile_groups")
+      .select(`
+        user_id,
+        is_admin,
+        profiles:user_id (
+          id,
+          username,
+          profile_picture_url
+        )
+      `)
+      .eq("group_id", groupId);
+
+    if (error) {
+      console.error("Error fetching group members:", error);
+    } else {
+      const members = data?.map(member => ({
+        user_id: member.user_id,
+        is_admin: member.is_admin,
+        profiles: Array.isArray(member.profiles) ? member.profiles[0] : member.profiles
+      })).filter(member => member.profiles) || [];
+      setGroupMembers(members);
+    }
+    setLoading(false);
+  }, [groupId]);
+
+  const fetchInitialData = useCallback(async () => {
+    if (!userId) return;
+    
     const totalWeeks = 18;
     const initialSelections: Selection[] = Array.from({ length: totalWeeks }, (_, index) => ({
       week: index + 1,
@@ -26,7 +71,7 @@ export function useGroupData(groupId: string, userInGroupData: any) {
       const { data, error } = await supabase
         .from("user_picks")
         .select("week, team_id, status, score")
-        .eq("user_id", userInGroupData?.user_id)
+        .eq("user_id", userId)
         .eq("group_id", groupId);
 
       if (error) {
@@ -50,9 +95,11 @@ export function useGroupData(groupId: string, userInGroupData: any) {
     } catch (err) {
       console.error("Error in fetchInitialData:", err);
     }
-  };
+  }, [userId, groupId]);
 
-  const fetchGroupSelections = async () => {
+  const fetchGroupSelections = useCallback(async () => {
+    if (groupMembers.length === 0) return;
+    
     try {
       const { data, error } = await supabase
         .from("user_picks")
@@ -66,8 +113,7 @@ export function useGroupData(groupId: string, userInGroupData: any) {
 
       if (data && data.length > 0) {
         const selectionsByUser: {[userId: string]: Selection[]} = {};
-        const currentMembers = groupMembers;   
-        currentMembers.forEach(member => {
+        groupMembers.forEach(member => {
           selectionsByUser[member.user_id] = Array.from({ length: 18 }, (_, index) => ({
             week: index + 1,
             teamId: null,
@@ -93,92 +139,18 @@ export function useGroupData(groupId: string, userInGroupData: any) {
     } catch (err) {
       console.error("Error in fetchGroupSelections:", err);
     }
-  };
-
-  const fetchNFLTeams = async () => {
-    const {data, error} = await supabase
-      .from("nfl_teams")
-      .select("*");
-
-    if(error) throw new Error(`Error fetching NFL teams: ${error.message}`);
-    if(data) {
-      const teams = data.map((team: any) => ({
-        id: team.id,
-        logo_url: team.logo_url,
-        name: team.name
-      }));
-      setNFLTeams(teams);
-    }
-  };
-
-  const fetchGroupMembers = async () => {
-    setLoading(true);
-
-    const { data, error } = await supabase
-      .from("profile_groups")
-      .select(`
-        user_id,
-        is_admin,
-        profiles:user_id (
-          id,
-          username,
-          profile_picture_url
-        )
-      `)
-      .eq("group_id", groupId);
-
-    if (error) {
-      console.error("Error fetching group members:", error);
-    } else {
-      const members = data?.map(member => ({
-        user_id: member.user_id,
-        is_admin: member.is_admin,
-        profiles: Array.isArray(member.profiles) ? member.profiles[0] : member.profiles
-      })).filter(member => member.profiles) || [];
-
-      setGroupMembers(members);
-    }
-
-    setLoading(false);
-  };
-
-  const refreshData = async () => {
-    await Promise.all([
-      fetchInitialData(),
-      fetchGroupSelections()
-    ]);
-  };
-
-  // Effects
-  useEffect(() => {
-    fetchNFLTeams();
-  }, []);
-
-  useEffect(() => {
-    fetchGroupMembers();
-  }, [groupId]);
-
-  useEffect(() => {
-    if (userInGroupData?.user_id) {
-      fetchInitialData();
-    }
-  }, [groupId, userInGroupData?.user_id]);
-
-  useEffect(() => {
-    if (groupMembers.length > 0) {
-      fetchGroupSelections();
-    }
-  }, [groupMembers]);
+  }, [groupId, groupMembers]);
 
   return {
     loading,
     groupMembers,
     nflTeams,
     selections,
-    setSelections,
     groupSelections,
-    leaveGroupMessage,
-    setLeaveGroupMessage,
-    refreshData
+    setSelections,
+    fetchNFLTeams,
+    fetchGroupMembers,
+    fetchInitialData,
+    fetchGroupSelections
   };
 }
