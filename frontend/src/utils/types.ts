@@ -39,6 +39,7 @@ export type profileGroupData = {
     group_id: number
     is_admin: boolean
     groups: groupData
+    group_size: number
 }
   
 

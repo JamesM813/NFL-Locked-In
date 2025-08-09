@@ -75,7 +75,15 @@ export default function GroupDash() {
         return;
       }
       const data = await response.json();
-      const curWeek = data?.week?.number || 1;
+      let curWeek = data?.week?.number || 1;
+      
+      const now = new Date();
+      const year = now.getFullYear();
+      const march1 = new Date(`${year}-03-01T00:00:00Z`);
+      const sep4 = new Date(`${year}-09-04T00:00:00Z`);
+      if(now >= march1 && now <= sep4){
+        curWeek = 1; // Force to week 1 before season starts since ESPN api does weird stuff with HOF game/preseason weeks
+      }
       setCurrentWeek(curWeek);
     }
     fetchCurrentWeek()

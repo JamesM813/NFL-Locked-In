@@ -13,7 +13,7 @@ export default function Groups() {
   if (!groupContext) { throw new Error("useGroup must be used within a GroupProvider")}
   if (!profileContext) { throw new Error("useProfile must be used within a ProfileProvider")}
   const { groups, refetchGroups } = groupContext
-  const { profile } = profileContext
+  const { profile, refetchProfiles } = profileContext
   
   const navigator = useNavigate()
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
@@ -23,6 +23,8 @@ export default function Groups() {
   //eslint-disable-next-line
   const [publicGroups, setPublicGroups] = useState<any[]>([])
 
+
+  
   useEffect(() => {
     async function fetchGroups() {
 
@@ -35,12 +37,12 @@ export default function Groups() {
         console.error("Error fetching user groups:", userError)
         return
       }
-      //setUserGroups(userGroupData || [])
+      
   
       const userGroupIds = new Set(userGroupData?.map(pg => pg.group_id))
       
       const { data: publicGroupData, error: publicError } = await supabase
-        .from('groups')
+        .from('group_member_counts')
         .select('*')
         .eq('is_public', true)
         .lt('group_size', 10)
@@ -55,10 +57,16 @@ export default function Groups() {
       setPublicGroups(filteredGroups)
     }
   
-    refetchGroups()
-    if (profile?.id) {
-      fetchGroups()
+    async function init() {
+      
+      await refetchProfiles();
+      refetchGroups();
+      fetchGroups();
+
     }
+
+    init();
+
   }, [profile?.id])
 
   function handleCreateGroup() {
@@ -233,7 +241,7 @@ export default function Groups() {
                         />
                         <div>
                           <h3 className="text-lg font-semibold">{group.groups.name}</h3>
-                          <p className="text-gray-400 text-sm">Group Members: {group.groups.group_size}/10</p>
+                          <p className="text-gray-400 text-sm">Group Members: {group.group_size}/10</p>
                           <p className="text-sm text-gray-400">Group ID: {group.groups.id}</p>
                         </div>
                       </div>
