@@ -100,7 +100,7 @@ export function SelectionCard({
               {getStatusIcon(selection.status)}
             </div>
             <div className="text-center">
-              <p className="text-xs text-gray-300">Score</p>
+              <p className="text-xs text-gray-300">Points</p>
               <p className="font-mono text-sm">{selection.score}</p>
             </div>
           </div>

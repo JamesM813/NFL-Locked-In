@@ -67,6 +67,31 @@ export default function GroupDash() {
     isPublic: false,
   });
 
+  // Score calculation function
+  const calculateMemberScores = () => {
+    const scores: { [key: string]: number } = {};
+    
+    // Initialize scores for all members
+    if (Array.isArray(groupMembers)) {
+      groupMembers.forEach(member => {
+        scores[member.user_id] = 0;
+      });
+    }
+    
+    // Sum up scores from groupSelections using the score column
+    if (groupSelections && typeof groupSelections === 'object') {
+      Object.entries(groupSelections).forEach(([userId, userSelections]) => {
+        if (Array.isArray(userSelections)) {
+          userSelections.forEach(selection => {
+            scores[userId] = (scores[userId] || 0) + (Number(selection.score) || 0);
+          });
+        }
+      });
+    }
+
+    return scores;
+  };
+
   // Effects
   useEffect(() => {
     async function fetchCurrentWeek(){
@@ -343,6 +368,7 @@ export default function GroupDash() {
           <Standings
             loading={loading}
             groupMembers={groupMembers}
+            memberScores={calculateMemberScores()}
           />
         </section>
 
