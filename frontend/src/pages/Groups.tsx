@@ -216,8 +216,6 @@ export default function Groups() {
             </div>
           </header>
 
-
-          {/* Groups Section */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/10 min-h-[300px]">
             <h2 className="text-xl font-semibold mb-4">Your Groups</h2>
@@ -256,7 +254,6 @@ export default function Groups() {
             )}
             </div>
 
-            {/* Public groups */}
             <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/10 min-h-[300px]">
               <h2 className="text-xl font-semibold mb-4">Public Groups</h2>
               { publicGroups && publicGroups.length > 0 ? (
@@ -300,7 +297,6 @@ export default function Groups() {
         </div>
       </div>
 
-      {/* Join Group Modal */}
       {isJoinModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
           <div className="relative w-full max-w-md bg-white/5 border border-white/10 rounded-2xl shadow-2xl p-8">

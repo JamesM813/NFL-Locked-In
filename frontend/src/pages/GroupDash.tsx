@@ -11,8 +11,10 @@ import { Standings } from "@/components/Standings";
 import { GroupPicks } from "@/components/GroupPicks";
 import { SettingsModal } from "@/components/SettingsModal";
 import { LeaveGroupModal } from "@/components/LeaveGroupModal";
+import { useNavigate } from "react-router-dom";
 
 export default function GroupDash() {
+  const nav = useNavigate();
   const { groupId } = useParams();
   const groupContext = useGroup();
   
@@ -26,7 +28,6 @@ export default function GroupDash() {
   const { groups, refetchGroups } = groupContext;
   const userInGroupData = groups?.find((group) => group.group_id === Number(groupId));
 
-  // Custom hooks
   const {
     loading,
     groupMembers,
@@ -48,37 +49,53 @@ export default function GroupDash() {
     handleLeaveGroup
   } = useGroupActions(groupId, refetchGroups);
 
-  // Local state for UI
+
+  const handleDeleteGroup = async () => {
+    try {
+      const { error } = await supabase
+        .from('groups')
+        .delete()
+        .eq('id', groupId);
+
+      if (error) throw error;
+
+      toast.success('Group deleted successfully');
+
+      await refetchGroups();
+      nav('/dashboard')
+      
+    } catch (error) {
+      console.error('Error deleting group:', error);
+      toast.error('Failed to delete group');
+      throw error; 
+    }
+  };
+
+  
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showTeamSelector, setShowTeamSelector] = useState<{ [key: number]: boolean }>({});
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [currentWeek, setCurrentWeek] = useState(1);
-  
-  // Leave group modal state
   const [leaveGroupMessage, setLeaveGroupMessage] = useState("");
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [confirmationText, setConfirmationText] = useState("");
   const [isLeavingGroup, setIsLeavingGroup] = useState(false);
   const [groupSize, setGroupSize] = useState(0);
-
-  // Settings form state
   const [settingsForm, setSettingsForm] = useState({
     groupName: '',
     isPublic: false,
   });
 
-  // Score calculation function
+
   const calculateMemberScores = () => {
     const scores: { [key: string]: number } = {};
     
-    // Initialize scores for all members
     if (Array.isArray(groupMembers)) {
       groupMembers.forEach(member => {
         scores[member.user_id] = 0;
       });
     }
-    
-    // Sum up scores from groupSelections using the score column
+
     if (groupSelections && typeof groupSelections === 'object') {
       Object.entries(groupSelections).forEach(([userId, userSelections]) => {
         if (Array.isArray(userSelections)) {
@@ -88,11 +105,11 @@ export default function GroupDash() {
         }
       });
     }
-
+    
     return scores;
   };
 
-  // Effects
+
   useEffect(() => {
     async function fetchCurrentWeek(){
       const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard')
@@ -163,7 +180,6 @@ export default function GroupDash() {
     }
   }, [userInGroupData]);
 
-  // Event handlers
   const handleChangeSettings = () => {
     if (!userInGroupData?.is_admin) {
       toast.error("You do not have permission to change group settings! Ask your group's admin to do this.");
@@ -352,7 +368,6 @@ export default function GroupDash() {
           </div>
         )}
 
-        {/* Main Content Sections */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SelectionsList
             selections={selections}
@@ -381,13 +396,13 @@ export default function GroupDash() {
           getStatusIcon={getStatusIcon}
         />
 
-        {/* Modals */}
         <SettingsModal
           isOpen={showSettingsModal}
           isSubmitting={isSubmittingSettings}
           initialSettings={settingsForm}
           onClose={() => setShowSettingsModal(false)}
           onSubmit={handleSubmitSettings}
+          onDeleteGroup={userInGroupData?.is_admin ? handleDeleteGroup : undefined}
         />
 
         <LeaveGroupModal

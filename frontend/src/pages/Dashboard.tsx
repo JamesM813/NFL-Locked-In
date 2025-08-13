@@ -88,19 +88,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Disclaimer Card */}
-      <div className="bg-yellow-500/20 backdrop-blur-sm rounded-xl p-6 shadow-md border border-yellow-500/30">
-        <h2 className="text-xl font-semibold text-yellow-300 mb-2">Disclaimer</h2>
-        <p className="text-sm text-yellow-200">
-          This website is currently under development. Feel free to look around and explore its features, 
-          but note that some functionality may not be fully implemented yet. If you encounter any issues or have any comments
-          or suggestions, please reach out at our <a href="/contact" className="underline text-yellow-300">contact page</a>, 
-          and check back for updates!
-        </p>
-      </div>
-
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Your Groups Section */}
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-md h-[32rem]">
           <h2 className="text-xl font-semibold mb-4">Your Groups</h2>
           <div
@@ -155,7 +143,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* NFL News Section */}
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
@@ -201,7 +188,17 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+       
       </section>
+       <div className="bg-yellow-500/20 backdrop-blur-sm rounded-xl p-6 shadow-md border border-yellow-500/30">
+        <h2 className="text-xl font-semibold text-yellow-300 mb-2">Disclaimer</h2>
+        <p className="text-sm text-yellow-200">
+          This website is currently under development. Feel free to look around and explore its features, 
+          but note that some functionality may not be fully implemented yet. If you encounter any issues or have any comments
+          or suggestions, please reach out at our <a href="/contact" className="underline text-yellow-300">contact page</a>, 
+          and check back for updates!
+        </p>
+      </div>
     </div>
   </div>
 );

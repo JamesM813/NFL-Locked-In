@@ -151,7 +151,7 @@ export function SelectionCard({
         </div>
       </div>
 
-      {/* Only show team selector if not locked */}
+
       {showTeamSelector && !isLocked && (
         <div className="mt-4 border-t border-white/20 pt-4">
           {nflTeams.length === 0 ? (
@@ -184,7 +184,7 @@ export function SelectionCard({
         </div>
       )}
 
-      {/* Show locked message if team selector is attempted on locked selection */}
+
       {showTeamSelector && isLocked && (
         <div className="mt-4 border-t border-white/20 pt-4">
           <div className="text-center py-4">

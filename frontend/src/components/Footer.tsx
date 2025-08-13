@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           
-          {/* App Info */}
+          
           <div className="md:col-span-2 space-y-4">
             <h2 className="text-xl font-bold text-white">NFL Pick 'Em</h2>
             <p className="text-gray-400 text-sm">
@@ -16,7 +16,6 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Navigation Links */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Game</h3>
             <nav className="flex flex-col space-y-2">
@@ -32,7 +31,6 @@ export default function Footer() {
             </nav>
           </div>
 
-          {/* Support Links */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Support</h3>
             <nav className="flex flex-col space-y-2">
@@ -46,7 +44,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Copyright */}
         <div className="mt-12 pt-6 border-t border-white/10 text-center">
           <p className="text-gray-500 text-xs">
             {currentYear} NFL Pick 'Em. Not affiliated with the NFL. Used only for non-commercial purposes.

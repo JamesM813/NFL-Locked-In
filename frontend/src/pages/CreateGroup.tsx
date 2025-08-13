@@ -23,7 +23,6 @@ export default function CreateGroup() {
     setError(null);
   
     try {
-      // 1. Get user data and verify authentication
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
         throw new Error("Authentication failed. Please log in again.");
@@ -161,7 +160,7 @@ export default function CreateGroup() {
         )}
         
         <div className="space-y-8">
-          {/* Group Name */}
+
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-300">
               Group Name
@@ -175,7 +174,7 @@ export default function CreateGroup() {
             />
           </div>
 
-          {/* Profile Picture Selection */}
+
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-300">
               Profile Picture
@@ -203,7 +202,7 @@ export default function CreateGroup() {
                 );
               })}
 
-              {/* Custom Upload Circle */}
+
               <label className="w-20 h-20 rounded-full cursor-pointer bg-white/5 hover:bg-white/10 flex items-center justify-center border-2 border-dashed border-white/20">
                 <input
                   id="custom-file"
@@ -219,7 +218,7 @@ export default function CreateGroup() {
             </div>
           </div>
 
-          {/* Settings */}
+
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
@@ -262,7 +261,6 @@ export default function CreateGroup() {
               </button>
             </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-col space-y-3 pt-4">
             <button
               type="button"

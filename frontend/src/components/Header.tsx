@@ -31,14 +31,12 @@ export default function Header() {
     <header className="backdrop-blur-sm bg-black/20 border-b border-white/10 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo/Brand */}
           <div className="flex items-center">
             <h1 className="text-2xl font-bold text-white">
               NFL Pick 'Em
             </h1>
           </div>
 
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => (
               <Button
@@ -64,8 +62,6 @@ export default function Header() {
               </Button>
             </div>
           </nav>
-
-          {/* Mobile Menu Button */}
           <div className="md:hidden">
             <Button
               variant="ghost"
@@ -82,7 +78,6 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile Navigation Menu */}
         <div id="mobile-menu" className="hidden md:hidden pb-4">
           <div className="space-y-2">
             {navItems.map((item) => (

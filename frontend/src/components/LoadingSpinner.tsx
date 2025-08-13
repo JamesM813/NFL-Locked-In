@@ -22,14 +22,12 @@ export function LoadingSpinner() {
       <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center">
         <div className="text-center">
           <div className="relative">
-            {/* Enhanced football with shadow */}
             <div className="w-16 h-12 bg-gradient-to-r from-orange-700 to-orange-500 rounded-full mb-4 mx-auto relative animate-spin shadow-lg">
               <div className="absolute inset-x-0 top-1/2 transform -translate-y-1/2">
                 <div className="h-0.5 bg-white mx-2 shadow-sm"></div>
                 <div className="h-0.5 bg-white mx-3 mt-1 shadow-sm"></div>
                 <div className="h-0.5 bg-white mx-3 mt-1 shadow-sm"></div>
               </div>
-              {/* Football highlight */}
               <div className="absolute top-1 left-2 w-3 h-2 bg-white/20 rounded-full blur-sm"></div>
             </div>
           </div>

@@ -70,21 +70,18 @@ export default function Login() {
     });
   };
 
-  // Reusable styles for form elements
   const inputStyles = 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 h-11';
   const labelStyles = 'block text-sm font-medium text-gray-300';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 via-gray-900 to-black p-4 text-white">
       <div className="w-full max-w-md">
-        {/* Logo/Brand Section */}
         <div className="text-center mb-8">
           <div className="text-6xl mb-4">🏈</div>
           <h1 className="text-3xl font-bold text-white mb-2">NFL Pick 'Em</h1>
           <p className="text-gray-400">Sign in to make your picks</p>
         </div>
 
-        {/* Auth Card */}
         <Card className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10">
           <CardHeader className="space-y-1 text-center">
             <CardTitle className="text-white text-2xl font-semibold">{isSignUp ? 'Sign Up' : 'Login'}</CardTitle>
@@ -94,13 +91,12 @@ export default function Login() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAuth} className="space-y-4">
-              {/* Email Field */}
+
               <div className="space-y-2">
                 <Label htmlFor="email" className={labelStyles}>Email</Label>
                 <Input id="email" type="email" placeholder="email@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className={inputStyles} required />
               </div>
 
-              {/* Username field */}
               {isSignUp && (
                 <div className="space-y-2">
                   <Label htmlFor="username" className={labelStyles}>Username</Label>
@@ -108,13 +104,11 @@ export default function Login() {
                 </div>
               )}
 
-              {/* Password Field */}
               <div className="space-y-2">
                 <Label htmlFor="password" className={labelStyles}>Password</Label>
                 <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" className={inputStyles} required />
               </div>
 
-              {/* Confirm Password Field */}
               {isSignUp && (
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password" className={labelStyles}>Confirm Password</Label>
@@ -122,7 +116,6 @@ export default function Login() {
                 </div>
               )}
 
-              {/* Forgot Password Link */}
               {!isSignUp && (
                 <div className="text-right">
                   <a href="#" className="text-sm text-blue-400 hover:text-blue-300 hover:underline">
@@ -131,20 +124,17 @@ export default function Login() {
                 </div>
               )}
 
-              {/* Message Display */}
               {message && (
                 <div className={`text-center p-2 rounded-md text-sm ${message.includes('Success') ? 'text-green-300 bg-green-500/10' : 'text-red-300 bg-red-500/10'}`}>
                   {message}
                 </div>
               )}
 
-              {/* Auth Button */}
               <Button type="submit" disabled={loading} className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 h-11 text-base font-semibold rounded-xl">
                 {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Login'}
               </Button>
             </form>
 
-            {/* Divider */}
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-white/20" />
@@ -154,7 +144,6 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Social Login Buttons */}
             <div className="grid grid-cols-2 gap-3">
               <Button 
                 variant="outline" 
@@ -185,14 +174,12 @@ export default function Login() {
           </CardContent>
         </Card>
 
-        {/* Sign Up Toggle Link */}
         <div className="text-center mt-6">
           <button type="button" onClick={() => { setIsSignUp(!isSignUp); setMessage(''); }} className="text-sm text-gray-400 hover:text-white hover:underline bg-transparent hover:bg-transparent transition-colors">
             {isSignUp ? 'Already have an account? Login' : "Don't have an account? Sign up"}
           </button>
         </div>
 
-        {/* Footer */}
         <div className="text-center mt-8 text-gray-500 text-xs px-4">
           <p>This project is an independent, personal work and is not affiliated with, endorsed by, or associated with the National Football League (NFL) or any of its teams. All NFL-related names, logos, and trademarks are the property of their respective owners. This project does not use these assets for commercial purposes and is intended for educational and non-commercial use only.</p>
         </div>

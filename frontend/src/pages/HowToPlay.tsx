@@ -7,7 +7,7 @@ export default function HowToPlay() {
       <div className="max-w-3xl mx-auto space-y-8">
         <h1 className="text-4xl font-bold text-center">How to Play</h1>
 
-        {/* Sections */}
+
         <Section title="Objective">
           Your goal is to pick one NFL team each week that you think will win their game. However, you can only pick each team <strong>once</strong> during the regular season. Join a group of up to 10 friends and show off your football smarts!
         </Section>
@@ -112,7 +112,7 @@ export default function HowToPlay() {
             </p>
           </div>
         </Section>
-        {/* FAQ */}
+
         <section id="faqs">
         <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-md shadow-lg space-y-4">
           <h2 className="text-2xl font-semibold text-white">FAQs</h2>

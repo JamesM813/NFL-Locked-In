@@ -7,7 +7,6 @@ interface StandingsProps {
 }
 
 export function Standings({ loading, groupMembers, memberScores = {} }: StandingsProps) {
-  // Sort members by score (highest first)
   const sortedMembers = [...groupMembers].sort((a, b) => {
     const scoreA = memberScores[a.user_id] || 0;
     const scoreB = memberScores[b.user_id] || 0;

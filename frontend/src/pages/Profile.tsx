@@ -1,4 +1,3 @@
-// Modified Profile Page with Enhanced Modal Avatar Picker
 import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 import type { profileData } from "@/utils/types"
@@ -107,7 +106,7 @@ export default function Profile() {
             <CardDescription className="text-gray-300">Your account details</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Profile picture section - now positioned normally in the content flow */}
+
             <div className="flex flex-col items-center mb-6">
               <div 
                 className="relative group w-32 h-32 mb-2 cursor-pointer"
@@ -134,7 +133,7 @@ export default function Profile() {
               </p>
             </div>
 
-            {/* User info */}
+
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-gray-400">Email:</p>
@@ -149,12 +148,10 @@ export default function Profile() {
         </Card>
       </div>
 
-      {/* Enhanced Modal */}
       <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="relative z-50">
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity duration-300" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="bg-gradient-to-br from-gray-800 via-gray-900 to-black p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-2xl border border-white/10 w-full max-w-md mx-4 transform transition-all duration-300 scale-100">
-            {/* Header */}
             <div className="flex items-center justify-between mb-6 md:mb-8">
               <Dialog.Title className="text-white text-xl md:text-2xl font-light tracking-tight">
                 Choose Avatar
@@ -167,7 +164,6 @@ export default function Profile() {
               </button>
             </div>
 
-            {/* Current Avatar Preview */}
             <div className="flex justify-center mb-6 md:mb-8">
               <div className="relative">
                 <img
@@ -179,9 +175,7 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Avatar Grid - 2 rows of 4 */}
             <div className="space-y-3 md:space-y-4">
-              {/* First row */}
               <div className="grid grid-cols-4 gap-3 md:gap-4">
                 {[1, 2, 3, 4].map((i) => {
                   const presetUrl = supabase
@@ -217,8 +211,6 @@ export default function Profile() {
                   )
                 })}
               </div>
-
-              {/* Second row */}
               <div className="grid grid-cols-4 gap-3 md:gap-4">
                 {[5, 6, 7].map((i) => {
                   const presetUrl = supabase
@@ -254,7 +246,6 @@ export default function Profile() {
                   )
                 })}
                 
-                {/* Upload button in bottom right */}
                 <label className="relative w-14 h-14 md:w-20 md:h-20 rounded-xl md:rounded-2xl cursor-pointer bg-gradient-to-br from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 flex flex-col items-center justify-center border-2 border-dashed border-white/30 hover:border-white/50 transition-all duration-300 hover:scale-105 group">
                   <input
                     type="file"
@@ -279,7 +270,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Footer */}
             <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-white/10">
               <p className="text-center text-xs md:text-sm text-gray-400">
                 Choose from presets or upload your own image

@@ -18,7 +18,5 @@ export default function ProtectedRoute(){
     if (loading) {
         return <LoadingSpinner />
     }
-
-    // If a user exists, render the nested routes. Otherwise, navigate to login.
     return user ? <Outlet /> : <Navigate to='/login' />
 }
