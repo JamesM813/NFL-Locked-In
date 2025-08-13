@@ -59,6 +59,7 @@ export default function GroupDash() {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [confirmationText, setConfirmationText] = useState("");
   const [isLeavingGroup, setIsLeavingGroup] = useState(false);
+  const [groupSize, setGroupSize] = useState(0);
 
   // Settings form state
   const [settingsForm, setSettingsForm] = useState({
@@ -89,6 +90,24 @@ export default function GroupDash() {
     fetchCurrentWeek()
   })
 
+
+  useEffect(() => {
+    async function fetchGroupSize(){
+      const {data: groupSize, error} = await supabase
+        .from('group_member_counts')
+        .select('group_size')
+        .eq('id', groupId)
+        .single();
+      if (error) {
+        console.error("Error fetching group size:", error);
+        return;
+      }
+      if (groupSize) {
+        setGroupSize(groupSize.group_size);
+    }
+  }
+  fetchGroupSize()
+  })
   useEffect(() => {
     fetchNFLTeams();
   }, [fetchNFLTeams]);
@@ -287,7 +306,6 @@ export default function GroupDash() {
 
   const group = userInGroupData.groups;
   const groupName = group.name;
-  const groupSize = group.group_size;
   const groupPictureURL = group.group_picture_url || `https://placehold.co/80x80/1f2937/ffffff?text=${groupName.charAt(0)}`;
 
   return (

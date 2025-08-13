@@ -26,7 +26,7 @@ export function SelectionCard({
   
   const isLocked = currentWeek > selection.week || 
     (selection.locks_at !== null && new Date(selection.locks_at) < new Date());
-  console.log(isLocked, selectedTeam, currentWeek, selection.week, selection.locks_at);
+  
   return (
     <div className={`bg-white/10 p-4 rounded-xl border border-white/20 ${
       isLocked ? 'opacity-75' : ''
