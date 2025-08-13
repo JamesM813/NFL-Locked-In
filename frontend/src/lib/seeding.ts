@@ -42,7 +42,7 @@ async function getTeamMapping(): Promise<Map<string, string>> {
 }
 
 async function fetchScheduleData(): Promise<void> {
-  const YEAR = 2024;
+  const YEAR = 2025;
   const SEASON_TYPE = 2; 
   const BASE_URL = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${YEAR}&seasontype=${SEASON_TYPE}&week=`
 
