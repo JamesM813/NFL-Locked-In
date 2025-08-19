@@ -33,7 +33,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <h1 className="text-2xl font-bold text-white">
-              NFL Pick 'Em
+              NFL Locked In
             </h1>
           </div>
 

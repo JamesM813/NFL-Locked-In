@@ -10,7 +10,7 @@ export default function Footer() {
           
           
           <div className="md:col-span-2 space-y-4">
-            <h2 className="text-xl font-bold text-white">NFL Pick 'Em</h2>
+            <h2 className="text-xl font-bold text-white">NFL Locked In</h2>
             <p className="text-gray-400 text-sm">
               The friendly competition where football knowledge meets bragging rights.
             </p>
@@ -46,7 +46,7 @@ export default function Footer() {
 
         <div className="mt-12 pt-6 border-t border-white/10 text-center">
           <p className="text-gray-500 text-xs">
-            {currentYear} NFL Pick 'Em. Not affiliated with the NFL. Used only for non-commercial purposes.
+            {currentYear} NFL Locked In. Not affiliated with the NFL. Used only for non-commercial purposes.
           </p>
         </div>
       </div>

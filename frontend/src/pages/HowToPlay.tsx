@@ -106,7 +106,7 @@ export default function HowToPlay() {
         <Section title='Feedback & Bugs'>
           <div className="space-y-4 text-sm text-gray-200">
             <p>
-              Have a great idea that can improve Pick 'Em? Encounter an annoying bug thats ruining your experience? Just want to give your compliments to the chef?
+              Have a great idea that can improve Locked In? Encounter an annoying bug thats ruining your experience? Just want to give your compliments to the chef?
               Feel free to reach out for any reason at our <a href="/contact" className="text-blue-400 hover:underline">contact form</a>, and we'll get back to you as
               soon as we can! This project wouldn't be possible without you!
             </p>
@@ -161,8 +161,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 const faqItems = [
   {
-    question: "Is Pick 'Em only during the regular season?",
-    answer: "Yes, for now Pick 'Em is only available during Weeks 1 through 18 of the NFL regular season. We may expand to include playoffs in the future.",
+    question: "Is Locked In only during the regular season?",
+    answer: "Yes, for now Locked In is only available during Weeks 1 through 18 of the NFL regular season. We may expand to include playoffs in the future.",
   },
   {
     question: "Can I join multiple groups?",
@@ -190,6 +190,6 @@ const faqItems = [
   },
   {
     question: "What if there is a tie for first place at the end of the season?",
-    answer: "Thats up to you! You can decide to split the prize, have a tiebreaker game, or whatever you and your group agree on. Pick 'Em doesn't enforce any rules for ties at the end of the season.",
+    answer: "Thats up to you! You can decide to split the prize, have a tiebreaker game, or whatever you and your group agree on. Locked In doesn't enforce any rules for ties at the end of the season.",
   },
 ]

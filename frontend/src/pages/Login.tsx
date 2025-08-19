@@ -78,7 +78,7 @@ export default function Login() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="text-6xl mb-4">🏈</div>
-          <h1 className="text-3xl font-bold text-white mb-2">NFL Pick 'Em</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">NFL Locked In</h1>
           <p className="text-gray-400">Sign in to make your picks</p>
         </div>
 
