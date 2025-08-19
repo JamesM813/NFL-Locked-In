@@ -60,8 +60,8 @@ export function GroupPicks({
                       )}
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-gray-300">Record</p>
-                      <p className="font-mono text-sm">{/* TODO: add record functionality */}</p>
+                      <p className="text-xs text-gray-300"></p>
+                      <p className="font-mono text-sm">{/* TODO: add record functionality eventually (record text above this line) */}</p>
                     </div>
                   </div>
 

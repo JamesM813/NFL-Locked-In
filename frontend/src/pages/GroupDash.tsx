@@ -84,6 +84,7 @@ export default function GroupDash() {
   const [settingsForm, setSettingsForm] = useState({
     groupName: '',
     isPublic: false,
+    profilePictureUrl: ''
   });
 
 
@@ -176,6 +177,7 @@ export default function GroupDash() {
       setSettingsForm({
         groupName: group.name || '',
         isPublic: group.is_public || false,
+        profilePictureUrl: group.group_picture_url || ''
       });
     }
   }, [userInGroupData]);
@@ -302,6 +304,60 @@ export default function GroupDash() {
       });
     }
   };
+ 
+  const handleSelectPresetAvatar = async (presetUrl: string): Promise<void> => {
+    try {
+      const { error } = await supabase
+        .from('groups')
+        .update({ group_picture_url: presetUrl })
+        .eq('id', groupId);
+
+      if (error) throw error;
+
+
+      setSettingsForm(prev => ({ ...prev, profilePictureUrl: presetUrl }));
+      
+
+      await refetchGroups();
+    } catch (error) {
+      console.error('Failed to update preset avatar:', error);
+      throw error;
+    }
+  };
+
+  const handleUploadProfilePicture = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const filePath = `group-${groupId}-${Math.random()}.${fileExt}`;
+  
+    try {
+
+      const { error: uploadError } = await supabase.storage
+        .from('group-avatars')
+        .upload(filePath, file);
+      
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('group-avatars')
+        .getPublicUrl(filePath);
+      
+      if (!publicUrl) throw new Error("No public URL");
+
+      const { error: updateError } = await supabase
+        .from('groups')
+        .update({ group_picture_url: publicUrl })
+        .eq('id', groupId);
+  
+      if (updateError) throw updateError;
+  
+      return publicUrl;
+    } catch (error) {
+      console.error('Upload failed:', error);
+      throw error;
+    } finally {
+      refetchGroups()
+    }
+  };
 
   const getStatusIcon = (status: 'win' | 'loss' | 'pending') => {
     switch (status) {
@@ -402,7 +458,16 @@ export default function GroupDash() {
           initialSettings={settingsForm}
           onClose={() => setShowSettingsModal(false)}
           onSubmit={handleSubmitSettings}
+          onSelectPresetAvatar={handleSelectPresetAvatar}
+          onUploadProfilePicture={handleUploadProfilePicture}
           onDeleteGroup={userInGroupData?.is_admin ? handleDeleteGroup : undefined}
+          presetAvatars={[1,2,3,4].map((i) => {
+            const presetUrl = supabase
+                  .storage
+                  .from("preset-group-avatars")
+                  .getPublicUrl(`avatar-${i}.png`).data.publicUrl
+            return presetUrl
+          })}
         />
 
         <LeaveGroupModal
