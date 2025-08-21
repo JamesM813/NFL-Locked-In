@@ -26,6 +26,9 @@ export default function Groups() {
 
   
   useEffect(() => {
+    if (!profile?.id) {
+      return;
+    }
     async function fetchGroups() {
 
       const { data: userGroupData, error: userError } = await supabase

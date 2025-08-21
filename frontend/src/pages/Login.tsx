@@ -27,6 +27,7 @@ export default function Login() {
         if (password !== confirmPassword) {
           throw new Error('Passwords do not match!');
         }
+        validatePassword(password)
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -36,6 +37,7 @@ export default function Login() {
             },
           },
         });
+
         if (error) throw new Error('Sign up error. The selected username may be taken or invalid. Please try another.');
         setMessage('Successfully signed up! Check your email for a confirmation link.');
         setIsSignUp(false);
@@ -58,6 +60,28 @@ export default function Login() {
     }
   };
 
+    const validatePassword = (password: string) => {
+      const minLength = 8;
+      const hasUpperCase = /[A-Z]/.test(password);
+      const hasLowerCase = /[a-z]/.test(password);
+      const hasNumbers = /\d/.test(password);
+      const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+      
+      if (password.length < minLength) {
+        return "Password must be at least 8 characters long";
+      }
+      if (!hasUpperCase || !hasLowerCase) {
+        return "Password must contain both uppercase and lowercase letters";
+      }
+      if (!hasNumbers) {
+        return "Password must contain at least one number";
+      }
+      if (!hasSpecialChar) {
+        return "Password must contain at least one special character";
+      }
+      return null;
+    };
+    
   const handleSocialLogin = () => {
     toast.error('This feature is not available yet, coming soon! Please login above.', {
       duration: 4000,

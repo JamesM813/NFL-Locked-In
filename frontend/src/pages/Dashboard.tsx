@@ -17,17 +17,43 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false)
   const [news, setNews] = useState<{id: string, title: string, source: string, time: string, type: string, image: string, url: string}[]>([])
 
+  const changelog = [
+    {
+      version: "v1.0.0",
+      date: "2025-08-22",
+      type: "release",
+      changes: [
+        "Initial release",
+        "Core gameplay functionality",
+      ]
+    }
+  ]
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'feature': return 'text-green-300 bg-green-500/20 border-green-500/30'
+      case 'fix': return 'text-blue-300 bg-blue-500/20 border-blue-500/30'
+      case 'release': return 'text-purple-300 bg-purple-500/20 border-purple-500/30'
+      default: return 'text-gray-300 bg-gray-500/20 border-gray-500/30'
+    }
+  }
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'feature': return '✨'
+      case 'fix': return '🔧'
+      case 'release': return '🚀'
+      default: return '📝'
+    }
+  }
+
   useEffect(() => {
     async function refetchData() {
-
       await refetchProfiles()
       await refetchGroups()
-
     }
-
     refetchData()
-  }
-  , [])
+  }, [])
 
   useEffect(() => {
     async function fetchNews() {
@@ -188,13 +214,54 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-       
       </section>
-       <div className="bg-yellow-500/20 backdrop-blur-sm rounded-xl p-6 shadow-md border border-yellow-500/30">
+
+      <section className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-md">
+        <div className="flex items-center space-x-2 mb-6">
+          <h2 className="text-xl font-semibold">Recent Updates</h2>
+          <span className="text-2xl">📋</span>
+        </div>
+        
+        <div className="space-y-4 max-h-96 overflow-y-auto pr-2" 
+             style={{
+               scrollbarWidth: "thin",
+               scrollbarColor: "#4B5563 #374151",
+             }}>
+          {changelog.map((update, index) => (
+            <div key={index} className="bg-white/10 rounded-lg p-4 border border-white/20">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getTypeColor(update.type)}`}>
+                    {getTypeIcon(update.type)} {update.type.toUpperCase()}
+                  </span>
+                  <span className="text-lg font-semibold">{update.version}</span>
+                </div>
+                <span className="text-sm text-gray-400">
+                  {new Date(update.date).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  })}
+                </span>
+              </div>
+              
+              <ul className="space-y-1">
+                {update.changes.map((change, changeIndex) => (
+                  <li key={changeIndex} className="text-sm text-gray-300 flex items-start space-x-2">
+                    <span className="text-gray-500 mt-1">•</span>
+                    <span>{change}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="bg-yellow-500/20 backdrop-blur-sm rounded-xl p-6 shadow-md border border-yellow-500/30">
         <h2 className="text-xl font-semibold text-yellow-300 mb-2">Disclaimer</h2>
         <p className="text-sm text-yellow-200">
-          This website is currently under development. Feel free to look around and explore its features, 
-          but note that some functionality may not be fully implemented yet. If you encounter any issues or have any comments
+          This website is in active development. If you encounter any issues or have any comments
           or suggestions, please reach out at our <a href="/contact" className="underline text-yellow-300">contact page</a>, 
           and check back for updates!
         </p>
