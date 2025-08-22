@@ -33,7 +33,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <img src={Logo} alt="NFL Locked In Logo" className="h-20 w-20 mr-2" />  
+            <img src={Logo} alt="NFL Locked In Logo" className="h-14 w-14 mr-2" />  
             <h1 className="text-2xl font-bold text-white">
               NFL Locked In
             </h1>
