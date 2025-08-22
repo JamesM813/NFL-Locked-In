@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import Logo from '../../public/Locked-In-Small-Gray.svg'
 
 export default function Header() {
   const navigate = useNavigate();
@@ -32,12 +33,14 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
+            <img src={Logo} alt="NFL Locked In Logo" className="h-20 w-20 mr-2" />  
             <h1 className="text-2xl font-bold text-white">
               NFL Locked In
             </h1>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-1">
+          {/* Desktop Navigation - Now shows only on large screens (1024px+) */}
+          <nav className="hidden lg:flex items-center space-x-1">
             {navItems.map((item) => (
               <Button
                 key={item.path}
@@ -62,7 +65,9 @@ export default function Header() {
               </Button>
             </div>
           </nav>
-          <div className="md:hidden">
+
+          {/* Mobile Menu Button - Now shows on medium screens and below */}
+          <div className="lg:hidden">
             <Button
               variant="ghost"
               className="text-white hover:bg-white/10"
@@ -78,7 +83,8 @@ export default function Header() {
           </div>
         </div>
 
-        <div id="mobile-menu" className="hidden md:hidden pb-4">
+        {/* Mobile Menu - Now shows on medium screens and below */}
+        <div id="mobile-menu" className="hidden lg:hidden pb-4">
           <div className="space-y-2">
             {navItems.map((item) => (
               <Button
