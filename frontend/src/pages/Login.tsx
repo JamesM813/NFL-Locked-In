@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,57 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleAuthChange = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', session.user.id)
+          .single();
+
+        if (error && error.code === 'PGRST116') {
+          // User doesn't exist in profiles table - new OAuth user
+          // Create profile with email as temporary username
+          const tempUsername = session.user.email?.split('@')[0] || 'user';
+          
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: session.user.id,
+              username: tempUsername,
+              email: session.user.email
+            });
+
+          if (!insertError) {
+            navigate('/dashboard');
+          } else {
+            console.error('Error creating profile:', insertError);
+            toast.error('Error setting up your account. Please try again.');
+          }
+        } else if (profile) {
+          // Existing user with profile
+          navigate('/dashboard');
+        }
+      }
+    };
+
+    handleAuthChange();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          await handleAuthChange();
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,50 +112,52 @@ export default function Login() {
     }
   };
 
-    const validatePassword = (password: string) => {
-      const minLength = 8;
-      const hasUpperCase = /[A-Z]/.test(password);
-      const hasLowerCase = /[a-z]/.test(password);
-      const hasNumbers = /\d/.test(password);
-      const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-      
-      if (password.length < minLength) {
-        return "Password must be at least 8 characters long";
-      }
-      if (!hasUpperCase || !hasLowerCase) {
-        return "Password must contain both uppercase and lowercase letters";
-      }
-      if (!hasNumbers) {
-        return "Password must contain at least one number";
-      }
-      if (!hasSpecialChar) {
-        return "Password must contain at least one special character";
-      }
-      return null;
-    };
+  const validatePassword = (password: string) => {
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
     
-    const handleSocialLogin = async (provider: 'google' | 'apple') => {
-      try {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider,
-          options: {
-            redirectTo: `${window.location.origin}/dashboard`
-          }
-        });
-        if (error) throw error;
-      } catch (err) {
-        console.error('Social login error:', err);
-        toast.error('Social login failed. Please try again.', {
-          duration: 4000,
-          position: 'top-center',
-          style: {
-            background: '#1f2937',
-            color: '#fff',
-            border: '1px solid #374151',
-          },
-        });
-      }
-    };
+    if (password.length < minLength) {
+      return "Password must be at least 8 characters long";
+    }
+    if (!hasUpperCase || !hasLowerCase) {
+      return "Password must contain both uppercase and lowercase letters";
+    }
+    if (!hasNumbers) {
+      return "Password must contain at least one number";
+    }
+    if (!hasSpecialChar) {
+      return "Password must contain at least one special character";
+    }
+    return null;
+  };
+  
+  const handleSocialLogin = async (provider: 'google' | 'apple') => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error('Social login error:', err);
+      toast.error('Social login failed. Please try again.', {
+        duration: 4000,
+        position: 'top-center',
+        style: {
+          background: '#1f2937',
+          color: '#fff',
+          border: '1px solid #374151',
+        },
+      });
+      setLoading(false);
+    }
+  };
 
   const inputStyles = 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 h-11';
   const labelStyles = 'block text-sm font-medium text-gray-300';
@@ -183,9 +236,10 @@ export default function Login() {
             <div className="grid grid-cols-1 gap-3">
               <Button 
                 variant="outline" 
-                className=" text-gray-400 h-11 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white rounded-xl"
+                className="text-gray-400 h-11 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white rounded-xl"
                 onClick={() => handleSocialLogin('google')}
                 type="button"
+                disabled={loading}
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -193,19 +247,8 @@ export default function Login() {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                Google
+                {loading ? 'Loading...' : 'Google'}
               </Button>
-              {/* <Button 
-                variant="outline" 
-                className="text-gray-400 h-11 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white rounded-xl"
-                onClick={() => handleSocialLogin('apple')}
-                type="button"
-              >
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M16.365 1.43c0 1.14-.44 2.072-1.095 2.843-.768.908-1.773 1.61-2.897 1.509-.077-1.23.395-2.34 1.05-3.094.745-.849 1.934-1.413 2.942-1.258zm5.46 17.72c-.676 1.58-1.49 3.06-2.61 4.358-1.105 1.292-2.49 2.482-4.248 2.487-1.476.005-1.947-.95-3.66-.944-1.713.006-2.22.958-3.692.952-1.757-.005-3.23-1.445-4.335-2.737C2.78 21.374.85 17.493 1.02 13.775c.104-2.257.86-4.565 2.296-6.295 1.47-1.771 3.41-2.838 5.354-2.785 1.267.032 2.468.898 3.66.91 1.165.012 2.27-.902 3.76-.884 1.308.017 2.74.688 3.775 1.856-1.473.923-2.44 2.283-2.342 4.18.108 2.144 1.442 3.414 2.486 4.056-.206.554-.432 1.097-.667 1.633z"/>
-                </svg>
-                Apple
-              </Button> */}
             </div>
           </CardContent>
         </Card>
