@@ -20,7 +20,7 @@ export default function Dashboard() {
   const changelog = [
     {
       version: "v1.0.0",
-      date: "2025-08-22",
+      date: "2025-08-22T14:35:00",
       type: "release",
       changes: [
         "Initial 2025 release",
@@ -238,7 +238,8 @@ export default function Dashboard() {
                   <span className="text-lg font-semibold">{update.version}</span>
                 </div>
                 <span className="text-sm text-gray-400">
-                  {new Date(update.date).toLocaleDateString('en-US', { 
+                  {new Date(update.date).toLocaleDateString([], { 
+                    timeZone: 'America/New_York',
                     month: 'short', 
                     day: 'numeric', 
                     year: 'numeric' 
