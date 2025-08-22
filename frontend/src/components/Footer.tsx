@@ -40,6 +40,9 @@ export default function Footer() {
               <Link to="/contact" className="text-gray-400 hover:text-white text-sm transition-colors">
                 Contact Support
               </Link>
+              <Link to="/privacy-policy" className="text-gray-400 hover:text-white text-sm transition-colors">
+                Privacy Policy
+              </Link>
             </nav>
           </div>
         </div>

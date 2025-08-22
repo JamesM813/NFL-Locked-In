@@ -3,6 +3,7 @@ import {Toaster} from 'react-hot-toast'
 import LoginPage from './pages/Login'
 import ForgotPasswordPage from './pages/ForgotPassword'
 import ResetPasswordPage from './pages/ResetPassword'
+import PrivacyPolicyPage from './pages/PrivacyPolicy'
 import DashboardPage from './pages/Dashboard'
 import SchedulePage from './pages/Schedule'
 import ProfilePage from './pages/Profile'
@@ -28,6 +29,7 @@ function App() {
           <Route path="/login" element={<LoginPage/>} />
           <Route path="/forgot-password" element={<ForgotPasswordPage/>} />
           <Route path="/reset-password" element={<ResetPasswordPage/>} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage/>} />
           
             <Route element={<ProtectedRoute/>}>
               <Route element={<ProtectedLayout/>}>
