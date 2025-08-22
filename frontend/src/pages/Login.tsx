@@ -83,17 +83,28 @@ export default function Login() {
       return null;
     };
     
-  const handleSocialLogin = () => {
-    toast.error('This feature is not available yet, coming soon! Please login above.', {
-      duration: 4000,
-      position: 'top-center',
-      style: {
-        background: '#1f2937',
-        color: '#fff',
-        border: '1px solid #374151',
-      },
-    });
-  };
+    const handleSocialLogin = async (provider: 'google' | 'apple') => {
+      try {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo: `${window.location.origin}/dashboard`
+          }
+        });
+        if (error) throw error;
+      } catch (err) {
+        console.error('Social login error:', err);
+        toast.error('Social login failed. Please try again.', {
+          duration: 4000,
+          position: 'top-center',
+          style: {
+            background: '#1f2937',
+            color: '#fff',
+            border: '1px solid #374151',
+          },
+        });
+      }
+    };
 
   const inputStyles = 'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 h-11';
   const labelStyles = 'block text-sm font-medium text-gray-300';
@@ -169,11 +180,11 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <Button 
                 variant="outline" 
                 className=" text-gray-400 h-11 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white rounded-xl"
-                onClick={() => handleSocialLogin()}
+                onClick={() => handleSocialLogin('google')}
                 type="button"
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -184,17 +195,17 @@ export default function Login() {
                 </svg>
                 Google
               </Button>
-              <Button 
+              {/* <Button 
                 variant="outline" 
                 className="text-gray-400 h-11 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white rounded-xl"
-                onClick={() => handleSocialLogin()}
+                onClick={() => handleSocialLogin('apple')}
                 type="button"
               >
                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M16.365 1.43c0 1.14-.44 2.072-1.095 2.843-.768.908-1.773 1.61-2.897 1.509-.077-1.23.395-2.34 1.05-3.094.745-.849 1.934-1.413 2.942-1.258zm5.46 17.72c-.676 1.58-1.49 3.06-2.61 4.358-1.105 1.292-2.49 2.482-4.248 2.487-1.476.005-1.947-.95-3.66-.944-1.713.006-2.22.958-3.692.952-1.757-.005-3.23-1.445-4.335-2.737C2.78 21.374.85 17.493 1.02 13.775c.104-2.257.86-4.565 2.296-6.295 1.47-1.771 3.41-2.838 5.354-2.785 1.267.032 2.468.898 3.66.91 1.165.012 2.27-.902 3.76-.884 1.308.017 2.74.688 3.775 1.856-1.473.923-2.44 2.283-2.342 4.18.108 2.144 1.442 3.414 2.486 4.056-.206.554-.432 1.097-.667 1.633z"/>
                 </svg>
                 Apple
-              </Button>
+              </Button> */}
             </div>
           </CardContent>
         </Card>
