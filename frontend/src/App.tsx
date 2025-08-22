@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import {Toaster} from 'react-hot-toast'
 import LoginPage from './pages/Login'
+import ForgotPasswordPage from './pages/ForgotPassword'
+import ResetPasswordPage from './pages/ResetPassword'
 import DashboardPage from './pages/Dashboard'
 import SchedulePage from './pages/Schedule'
 import ProfilePage from './pages/Profile'
@@ -24,6 +26,8 @@ function App() {
         <Routes>
           <Route path="/" element={<RootRedirect/>}/>
           <Route path="/login" element={<LoginPage/>} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage/>} />
+          <Route path="/reset-password" element={<ResetPasswordPage/>} />
           
             <Route element={<ProtectedRoute/>}>
               <Route element={<ProtectedLayout/>}>

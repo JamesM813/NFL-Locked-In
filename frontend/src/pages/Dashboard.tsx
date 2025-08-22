@@ -23,7 +23,7 @@ export default function Dashboard() {
       date: "2025-08-22",
       type: "release",
       changes: [
-        "Initial release",
+        "Initial 2025 release",
         "Core gameplay functionality",
       ]
     }

@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import Logo from '../../public/Locked-In-Small-Gray.svg';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -98,13 +99,13 @@ export default function Login() {
   const labelStyles = 'block text-sm font-medium text-gray-300';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 via-gray-900 to-black p-4 text-white">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="text-6xl mb-4">🏈</div>
-          <h1 className="text-3xl font-bold text-white mb-2">NFL Locked In</h1>
-          <p className="text-gray-400">Sign in to make your picks</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 via-gray-900 to-black p-4 text-white">
+        <div className="w-full max-w-md">
+          <div className="flex flex-col items-center text-center mb-8">
+            <img src={Logo} alt="NFL Locked In Logo" className="h-20 w-20 mb-2" />  
+            <h1 className="text-3xl font-bold text-white mb-2">NFL Locked In</h1>
+            <p className="text-gray-400">Sign in to make your picks</p>
+          </div>
 
         <Card className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10">
           <CardHeader className="space-y-1 text-center">
@@ -142,7 +143,7 @@ export default function Login() {
 
               {!isSignUp && (
                 <div className="text-right">
-                  <a href="#" className="text-sm text-blue-400 hover:text-blue-300 hover:underline">
+                  <a href="/forgot-password" className="text-sm text-blue-400 hover:text-blue-300 hover:underline">
                     Forgot your password?
                   </a>
                 </div>
