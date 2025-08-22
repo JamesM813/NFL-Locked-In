@@ -39,7 +39,7 @@ export default function Login() {
         });
 
         if (error) throw new Error('Sign up error. The selected username may be taken or invalid. Please try another.');
-        setMessage('Successfully signed up! Check your email for a confirmation link.');
+        setMessage('Successfully signed up! Check your email for a confirmation link. Be sure to check your spam folder as well');
         setIsSignUp(false);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
