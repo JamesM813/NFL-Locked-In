@@ -102,14 +102,15 @@ export default function Dashboard() {
     <div className="max-w-7xl mx-auto space-y-8">
       <header className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">{profile.username}</h1>
+          <h1 className="text-3xl font-bold cursor-pointer hover:opacity-80 transition" onClick={() => navigator('/profile')}>{profile.username}</h1>
           <p className="text-gray-400">Welcome back! Here's what's going on.</p>
         </div>
         <div>
           <img
             src={profile.profile_picture_url}
             alt="Profile picture failed to load"
-            className="mt-4 mr-4 w-20 h-20 rounded-full border-2 border-white object-cover shadow-md"
+            className="mt-4 mr-4 w-20 h-20 rounded-full border-2 border-white object-cover shadow-md cursor-pointer hover:opacity-80 transition" 
+            onClick={() => navigator('/profile')}
           />
         </div>
       </header>
