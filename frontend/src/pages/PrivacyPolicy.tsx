@@ -1,12 +1,19 @@
+import { useNavigate } from "react-router-dom";
+
 export default function PrivacyPolicy() {
-
-
+    const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black p-4 md:p-8 text-white">
       <div className="max-w-4xl mx-auto space-y-8">
         <header>
           <h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
           <p className="text-gray-400">Last updated: August 22nd, 2025</p>
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="px-4 py-2 mt-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+          >
+            Back to Dashboard
+          </button>
         </header>
 
         <section className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-md space-y-4">

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+/*eslist-disable*/
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,13 +18,17 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+  const processingAuth = useRef(false);
 
   useEffect(() => {
-    const handleAuthChange = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    //eslint-disable-next-line
+    const handleAuthChange = async (session: any) => {
+      // Prevent duplicate processing
+      if (processingAuth.current || !session?.user) return;
       
-      if (session?.user) {
-
+      processingAuth.current = true;
+      
+      try {
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('username')
@@ -32,44 +37,89 @@ export default function Login() {
 
         if (error && error.code === 'PGRST116') {
           // User doesn't exist in profiles table - new OAuth user
-          // Create profile with email as temporary username
-          const tempUsername = session.user.email?.split('@')[0] || 'user';
+          console.log('Creating new profile for OAuth user');
+          
+          // Generate a unique username
+          const baseUsername = session.user.email?.split('@')[0] || 'user';
+          let uniqueUsername = baseUsername;
+          let counter = 1;
+          
+          // Check if username exists and make it unique
+          while (true) {
+            const { data: existingUser } = await supabase
+              .from('profiles')
+              .select('username')
+              .eq('username', uniqueUsername)
+              .single();
+            
+            if (!existingUser) break;
+            uniqueUsername = `${baseUsername}${counter}`;
+            counter++;
+          }
           
           const { error: insertError } = await supabase
             .from('profiles')
             .insert({
               id: session.user.id,
-              username: tempUsername,
+              username: uniqueUsername,
               email: session.user.email
             });
 
-          if (!insertError) {
-            navigate('/dashboard');
-          } else {
+          if (insertError) {
             console.error('Error creating profile:', insertError);
             toast.error('Error setting up your account. Please try again.');
+            return;
           }
+          
+          console.log('Profile created successfully');
+          navigate('/dashboard');
         } else if (profile) {
           // Existing user with profile
+          console.log('Existing user found, navigating to dashboard');
           navigate('/dashboard');
+        } else if (error) {
+          console.error('Error fetching profile:', error);
+          toast.error('Error accessing your account. Please try again.');
         }
+      } catch (err) {
+        console.error('Auth change handling error:', err);
+        toast.error('Authentication error. Please try again.');
+      } finally {
+        processingAuth.current = false;
       }
     };
 
-    handleAuthChange();
+    // Check initial session
+    const checkInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await handleAuthChange(session);
+      }
+    };
 
+    checkInitialSession();
+
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email);
+        
         if (event === 'SIGNED_IN' && session?.user) {
-          await handleAuthChange();
+          await handleAuthChange(session);
+        } else if (event === 'SIGNED_OUT') {
+          processingAuth.current = false;
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      processingAuth.current = false;
+    };
   }, [navigate]);
 
-  const handleAuth = async (e: React.FormEvent) => {
+  //eslint-disable-next-line
+  const handleAuth = async (e: any) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
@@ -79,8 +129,24 @@ export default function Login() {
         if (password !== confirmPassword) {
           throw new Error('Passwords do not match!');
         }
-        validatePassword(password)
-        const { error } = await supabase.auth.signUp({
+        
+        const passwordError = validatePassword(password);
+        if (passwordError) {
+          throw new Error(passwordError);
+        }
+
+        // Check if username already exists
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('username', username)
+          .single();
+
+        if (existingUser) {
+          throw new Error('Username is already taken. Please choose another.');
+        }
+
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -90,23 +156,34 @@ export default function Login() {
           },
         });
 
-        if (error) throw new Error('Sign up error. The selected username may be taken or invalid. Please try another.');
-        setMessage('Successfully signed up! Check your email for a confirmation link. Be sure to check your spam folder as well');
+        if (error) {
+          console.error('Signup error:', error);
+          throw new Error('Sign up failed. Please check your email and try again.');
+        }
+
+        // If user is immediately confirmed (no email verification needed)
+        if (data.user && !data.user.email_confirmed_at) {
+          setMessage('Successfully signed up! Check your email for a confirmation link. Be sure to check your spam folder as well.');
+        }
+        
         setIsSignUp(false);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        if (error) throw error;
-        navigate('/dashboard');
+        
+        if (error) {
+          console.error('Login error:', error);
+          throw new Error('Invalid email or password. Please try again.');
+        }
+        
+        // Navigation will be handled by the auth state change listener
       }
-    } catch (error) {
-      if (error instanceof Error) {
-        setMessage(error.message);
-      } else {
-        setMessage('An unknown error occurred.');
-      }
+      //eslint-disable-next-line
+    } catch (error: any) {
+      console.error('Auth error:', error);
+      setMessage(error.message || 'An unknown error occurred.');
     } finally {
       setLoading(false);
     }
@@ -133,17 +210,28 @@ export default function Login() {
     }
     return null;
   };
-  
-  const handleSocialLogin = async (provider: 'google' | 'apple') => {
+  //eslint-disable-next-line
+  const handleSocialLogin = async (provider: any) => {
+    if (loading || processingAuth.current) return;
+    
     try {
       setLoading(true);
+      processingAuth.current = false; // Reset before OAuth
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: `${window.location.origin}/dashboard`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
-      if (error) throw error;
+      
+      if (error) {
+        throw error;
+      }
     } catch (err) {
       console.error('Social login error:', err);
       toast.error('Social login failed. Please try again.', {
@@ -155,6 +243,7 @@ export default function Login() {
           border: '1px solid #374151',
         },
       });
+    } finally {
       setLoading(false);
     }
   };

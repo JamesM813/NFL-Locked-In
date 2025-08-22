@@ -39,7 +39,7 @@ export default function Header() {
             </h1>
           </div>
 
-          {/* Desktop Navigation - Now shows only on large screens (1024px+) */}
+        
           <nav className="hidden lg:flex items-center space-x-1">
             {navItems.map((item) => (
               <Button
@@ -66,7 +66,7 @@ export default function Header() {
             </div>
           </nav>
 
-          {/* Mobile Menu Button - Now shows on medium screens and below */}
+
           <div className="lg:hidden">
             <Button
               variant="ghost"
@@ -83,7 +83,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile Menu - Now shows on medium screens and below */}
+
         <div id="mobile-menu" className="hidden lg:hidden pb-4">
           <div className="space-y-2">
             {navItems.map((item) => (
