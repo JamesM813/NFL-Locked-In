@@ -32,12 +32,12 @@ export function useGroupActions(groupId: string, refetchGroups: () => Promise<vo
       if (error || !data) throw error;
 
       const inviteCode = data[0].join_code;
-      toast.success(`Invite code created: ${inviteCode}`, { duration: 6000 });
+      toast.success(`Invite code created: ${inviteCode}`, { duration: 10000 });
       await navigator.clipboard.writeText(inviteCode);
       toast.success("Invite code copied to clipboard!");
     } catch (err) {
       console.error("Invite error:", err);
-      toast.error("Failed to create invite code. Please try again.");
+     
     }
   };
 

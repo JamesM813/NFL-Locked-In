@@ -75,7 +75,7 @@ export default function GroupDash() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showTeamSelector, setShowTeamSelector] = useState<{ [key: number]: boolean }>({});
   const [selectedWeek, setSelectedWeek] = useState(1);
-  const [currentWeek, setCurrentWeek] = useState(1);
+  const [currentWeek, setCurrentWeek] = useState(1); //TODO maybe change? Can't remember
   const [leaveGroupMessage, setLeaveGroupMessage] = useState("");
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [confirmationText, setConfirmationText] = useState("");
