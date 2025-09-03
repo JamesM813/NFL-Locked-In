@@ -5,7 +5,7 @@ import type { Selection, NFLTeam } from '@/utils/types';
 interface SelectionsListProps {
   selections: Selection[];
   currentWeek: number;
-  getAvailableTeamsForWeek: (week: number) => NFLTeam[];
+  getAvailableTeamsForUserWeek: (week: number, selections: Selection[]) => NFLTeam[];
   showTeamSelector: { [key: number]: boolean };
   onToggleTeamSelector: (week: number) => void;
   onTeamSelection: (week: number, teamId: string | null) => Promise<void>;
@@ -16,7 +16,7 @@ interface SelectionsListProps {
 export function SelectionsList({
   selections,
   currentWeek,
-  getAvailableTeamsForWeek,
+  getAvailableTeamsForUserWeek,
   showTeamSelector,
   onToggleTeamSelector,
   onTeamSelection,
@@ -30,8 +30,8 @@ export function SelectionsList({
         {selections.map((selection) => {
           const selectedTeam = getSelectedTeam(selection.teamId);
           const isExpanded = showTeamSelector[selection.week] || false;
-          const availableTeams = getAvailableTeamsForWeek(selection.week);
-          
+          const availableTeams = getAvailableTeamsForUserWeek(selection.week, selections);
+
           return (
             <SelectionCard
               key={selection.week}

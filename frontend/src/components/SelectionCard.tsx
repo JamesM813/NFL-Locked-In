@@ -23,7 +23,6 @@ export function SelectionCard({
   getStatusIcon
 }: SelectionCardProps) {
 
-  
   const isLocked = currentWeek > selection.week || 
     (selection.locks_at !== null && new Date(selection.locks_at) < new Date());
   

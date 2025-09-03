@@ -39,7 +39,7 @@ export default function GroupDash() {
     fetchGroupMembers,
     fetchInitialData,
     fetchGroupSelections,
-    getAvailableTeamsForWeek
+    getAvailableTeamsForUserWeek
   } = useGroupData(groupId, userInGroupData?.user_id);
 
   const {
@@ -428,7 +428,7 @@ export default function GroupDash() {
           <SelectionsList
             selections={selections}
             currentWeek={currentWeek}
-            getAvailableTeamsForWeek={getAvailableTeamsForWeek}
+            getAvailableTeamsForUserWeek={getAvailableTeamsForUserWeek}
             showTeamSelector={showTeamSelector}
             onToggleTeamSelector={toggleTeamSelector}
             onTeamSelection={handleTeamSelection}

@@ -26,7 +26,15 @@ export default function Dashboard() {
         "Initial 2025 release",
         "Core gameplay functionality",
       ]
-    }
+    },
+        {
+      version: "v1.0.1",
+      date: "2025-09-03T14:35:00",
+      type: "fix",
+      changes: [
+        "Fixed issue with used teams not being removed from selection list",
+      ]
+    },
   ]
 
   const getTypeColor = (type: string) => {

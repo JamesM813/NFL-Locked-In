@@ -40,19 +40,33 @@ export function useGroupData(groupId: string, userId?: string) {
     }
   }, []);
 
-  const getAvailableTeamsForWeek = useCallback((week: number) => {
-    const currentTime = new Date();
-    const weekGames = nflSchedule.filter(game => game.week === week);
-    
-    return nflTeams.filter(team => {
-      const teamGame = weekGames.find(game => 
-        game.home_team_id === team.id || game.away_team_id === team.id
-      );
-      
-      if (!teamGame) return false; 
-      return new Date(teamGame.locks_at) > currentTime; 
-    });
-  }, [nflTeams, nflSchedule]);
+  const getAvailableTeamsForUserWeek = useCallback(
+    (week: number, userSelections: Selection[]) => {
+      const currentTime = new Date();
+      const weekGames = nflSchedule.filter((game) => game.week === week);
+
+      const usedTeamIds = userSelections
+        .filter((sel) => sel.teamId !== null && sel.week < week)
+        .map((sel) => sel.teamId);
+        
+        const filteredTeams = nflTeams.filter((team) => {
+        const teamGame = weekGames.find(
+          (game) => game.home_team_id === team.id || game.away_team_id === team.id
+        );
+        if (!teamGame) return false;
+
+        if (new Date(teamGame.locks_at) <= currentTime) return false;
+
+        if (usedTeamIds.includes(team.id)) return false;
+
+        return true;
+      });
+
+      return filteredTeams
+    },
+    [nflTeams, nflSchedule]
+  );
+
 
   const fetchGroupMembers = useCallback(async () => {
     setLoading(true);
@@ -184,6 +198,6 @@ export function useGroupData(groupId: string, userId?: string) {
     fetchGroupMembers,
     fetchInitialData,
     fetchGroupSelections,
-    getAvailableTeamsForWeek
+    getAvailableTeamsForUserWeek
   };
 }
