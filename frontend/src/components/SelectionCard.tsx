@@ -9,7 +9,7 @@ interface SelectionCardProps {
   showTeamSelector: boolean;
   onToggleTeamSelector: (week: number) => void;
   onTeamSelection: (week: number, teamId: string | null) => Promise<void>;
-  getStatusIcon: (status: 'win' | 'loss' | 'pending') => React.ReactNode;
+  getStatusIcon: (status: 'correct' | 'incorrect' | 'pending') => React.ReactNode;
 }
 
 export function SelectionCard({

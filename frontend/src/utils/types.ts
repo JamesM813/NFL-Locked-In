@@ -62,7 +62,7 @@ export type NFLTeam = {
 export type Selection = {
     week: number;
     teamId: string | null;
-    status: 'win' | 'loss' | 'pending';
+    status: 'correct' | 'incorrect' | 'pending';
     score: string;
     locks_at: Date | null;
   }

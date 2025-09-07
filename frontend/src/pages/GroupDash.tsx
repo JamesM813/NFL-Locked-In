@@ -359,9 +359,9 @@ export default function GroupDash() {
     }
   };
 
-  const getStatusIcon = (status: 'win' | 'loss' | 'pending') => {
+  const getStatusIcon = (status: 'correct' | 'incorrect' | 'pending') => {
     switch (status) {
-      case 'win':
+      case 'correct':
         return (
           <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -369,7 +369,7 @@ export default function GroupDash() {
             </svg>
           </div>
         );
-      case 'loss':
+      case 'incorrect':
         return (
           <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

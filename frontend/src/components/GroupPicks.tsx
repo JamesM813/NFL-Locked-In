@@ -7,7 +7,7 @@ interface GroupPicksProps {
   groupMembers: GroupMember[];
   groupSelections: {[userId: string]: Selection[]};
   getSelectedTeam: (teamId: string | null) => NFLTeam | null;
-  getStatusIcon: (status: 'win' | 'loss' | 'pending') => React.ReactNode;
+  getStatusIcon: (status: 'correct' | 'incorrect' | 'pending') => React.ReactNode;
 }
 
 export function GroupPicks({
