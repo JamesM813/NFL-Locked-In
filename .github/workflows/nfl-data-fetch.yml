@@ -1,0 +1,122 @@
+name: NFL Data Fetch
+
+on:
+
+  schedule:
+
+    - cron: '0 * * * *'
+
+    - cron: '*/15 * * * 0,1,4' 
+  
+  workflow_dispatch:
+    inputs:
+      week:
+        description: 'NFL Week Number'
+        required: false
+        default: '1'
+        type: string
+      force_run:
+        description: 'Force run regardless of season'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  fetch-nfl-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10 
+    
+    steps:
+    - name: Check if NFL season
+      id: season_check
+      run: |
+
+        current_month=$(date +%m)
+        current_day=$(date +%d)
+        
+        if [[ ($current_month -ge 9) || ($current_month -le 2) ]] || [[ "${{ github.event.inputs.force_run }}" == "true" ]]; then
+          echo "in_season=true" >> $GITHUB_OUTPUT
+          echo "NFL season is active (or forced)"
+        else
+          echo "in_season=false" >> $GITHUB_OUTPUT
+          echo "NFL season is not active"
+        fi
+
+    - name: Determine current week
+      id: week_calc
+      if: steps.season_check.outputs.in_season == 'true'
+      run: |
+        if [[ -n "${{ github.event.inputs.week }}" ]]; then
+          week="${{ github.event.inputs.week }}"
+          echo "Using manual week: $week"
+        else
+
+          sept_start=$(date -d "$(date +%Y)-09-07" +%s)
+          current=$(date +%s)
+          
+          if [[ $current -lt $sept_start ]]; then
+            week=1
+          else
+
+            week_diff=$(( (current - sept_start) / 604800 + 1 ))  # 604800 = seconds in a week
+            week=$(( week_diff > 18 ? 18 : week_diff ))  # Cap at week 18
+          fi
+          echo "Calculated week: $week"
+        fi
+        
+        echo "current_week=$week" >> $GITHUB_OUTPUT
+
+    - name: Call Supabase Edge Function
+      id: api_call
+      if: steps.season_check.outputs.in_season == 'true'
+      run: |
+        echo "🏈 Calling NFL data fetch for week ${{ steps.week_calc.outputs.current_week }}"
+        
+        response=$(curl -w "\n%{http_code}" \
+          -L -X POST '${{ secrets.SUPABASE_URL }}/functions/v1/test-fetch' \
+          -H 'Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}' \
+          -H 'Content-Type: application/json' \
+          --data '{
+            "name": "GitHub Actions",
+            "week": ${{ steps.week_calc.outputs.current_week }},
+            "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+          }' \
+          --max-time 300 \
+          --retry 3 \
+          --retry-delay 10 \
+          --retry-max-time 600 \
+          --silent)
+        
+        body=$(echo "$response" | head -n -1)
+        status_code=$(echo "$response" | tail -n 1)
+        
+        echo "Response status: $status_code"
+        echo "Response body: $body"
+        
+        echo "status_code=$status_code" >> $GITHUB_OUTPUT
+        echo "response_body<<EOF" >> $GITHUB_OUTPUT
+        echo "$body" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+        if [[ "$status_code" -ge 200 && "$status_code" -lt 300 ]]; then
+          echo "API call successful"
+        else
+          echo "API call failed with status $status_code"
+          exit 1
+        fi
+
+    - name: Handle API response
+      if: steps.season_check.outputs.in_season == 'true' && steps.api_call.outcome == 'success'
+      run: |
+        echo "NFL data fetch completed successfully"
+        echo "Week: ${{ steps.week_calc.outputs.current_week }}"
+        echo "Status: ${{ steps.api_call.outputs.status_code }}"
+        
+
+    - name: Handle failure
+      if: steps.season_check.outputs.in_season == 'true' && failure()
+      run: |
+        echo "Workflow failed!"
+        echo "Week: ${{ steps.week_calc.outputs.current_week }}"
+        echo "Status: ${{ steps.api_call.outputs.status_code }}"
+        echo "Response: ${{ steps.api_call.outputs.response_body }}"
