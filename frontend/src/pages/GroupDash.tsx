@@ -132,10 +132,14 @@ export default function GroupDash() {
       setCurrentWeek(curWeek);
     }
     fetchCurrentWeek()
-    setSelectedWeek(currentWeek);
+
   })
 
 
+  useEffect(() => {
+    setSelectedWeek(currentWeek);
+  }, [])
+  
   useEffect(() => {
     async function fetchGroupSize(){
       const {data: groupSize, error} = await supabase

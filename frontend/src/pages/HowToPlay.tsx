@@ -178,7 +178,7 @@ const faqItems = [
   },
   {
     question: "What happens if the team I selected finishes their game in a tie?",
-    answer: "In the event of a tie, both teams will be considered winners for scoring purposes, due to the nature of the game and unlikelyhood of a tie."
+    answer: "In the event of a tie, both teams will receive zero points as neither won their game."
   },
   {
     question: "What happens if a game is postponed or canceled and I didn't change my pick in time?",
