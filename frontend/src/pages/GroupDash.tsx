@@ -74,8 +74,8 @@ export default function GroupDash() {
   
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showTeamSelector, setShowTeamSelector] = useState<{ [key: number]: boolean }>({});
-  const [selectedWeek, setSelectedWeek] = useState(1);
-  const [currentWeek, setCurrentWeek] = useState(1); //TODO maybe change? Can't remember
+  const [currentWeek, setCurrentWeek] = useState(1);
+  const [selectedWeek, setSelectedWeek] = useState(currentWeek);
   const [leaveGroupMessage, setLeaveGroupMessage] = useState("");
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [confirmationText, setConfirmationText] = useState("");
@@ -120,6 +120,7 @@ export default function GroupDash() {
       }
       const data = await response.json();
       let curWeek = data?.week?.number || 1;
+      console.log(curWeek)
       
       const now = new Date();
       const year = now.getFullYear();
@@ -131,6 +132,7 @@ export default function GroupDash() {
       setCurrentWeek(curWeek);
     }
     fetchCurrentWeek()
+    setSelectedWeek(currentWeek);
   })
 
 
@@ -450,6 +452,7 @@ export default function GroupDash() {
           groupSelections={groupSelections}
           getSelectedTeam={getSelectedTeam}
           getStatusIcon={getStatusIcon}
+          currentWeek={currentWeek}
         />
 
         <SettingsModal

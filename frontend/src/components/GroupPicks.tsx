@@ -8,6 +8,7 @@ interface GroupPicksProps {
   groupSelections: {[userId: string]: Selection[]};
   getSelectedTeam: (teamId: string | null) => NFLTeam | null;
   getStatusIcon: (status: 'correct' | 'incorrect' | 'pending') => React.ReactNode;
+  currentWeek: number;
 }
 
 export function GroupPicks({
