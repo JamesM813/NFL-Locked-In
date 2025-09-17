@@ -120,7 +120,6 @@ export default function GroupDash() {
       }
       const data = await response.json();
       let curWeek = data?.week?.number || 1;
-      console.log(curWeek)
       
       const now = new Date();
       const year = now.getFullYear();
@@ -138,7 +137,7 @@ export default function GroupDash() {
 
   useEffect(() => {
     setSelectedWeek(currentWeek);
-  }, [])
+  }, [currentWeek])
   
   useEffect(() => {
     async function fetchGroupSize(){
