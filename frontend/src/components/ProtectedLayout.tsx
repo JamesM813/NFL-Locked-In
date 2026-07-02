@@ -5,6 +5,7 @@ import Header from './Header'
 import Footer from './Footer'
 import { ProfileContext } from '@/context/ProfileContext'
 import { GroupContext } from '@/context/GroupContext'
+import { SeasonProvider } from '@/context/SeasonContext'
 import {LoadingSpinner} from "./LoadingSpinner";
 import type { profileData, profileGroupData } from '@/utils/types'
 
@@ -102,15 +103,17 @@ export default function ProtectedLayout() {
       refetchProfiles: refetchProfile 
     }}>
       <GroupContext.Provider value={{ groups, refetchGroups }}>
-        <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black">
-          <Header />
-          
-          <main>
-          
-            <Outlet />
-            <Footer />
-          </main>
-        </div>
+        <SeasonProvider>
+          <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black">
+            <Header />
+
+            <main>
+
+              <Outlet />
+              <Footer />
+            </main>
+          </div>
+        </SeasonProvider>
       </GroupContext.Provider>
     </ProfileContext.Provider>
   )

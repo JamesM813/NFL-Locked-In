@@ -2,6 +2,7 @@ export type Game = {
     id: string
     created_at: string
     api_game_id: string
+    season: number
     week: number
     game_time: string
     status: string

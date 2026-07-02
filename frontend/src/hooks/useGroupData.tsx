@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { GroupMember, NFLTeam, Selection } from '@/utils/types';
 
-export function useGroupData(groupId: string, userId?: string) {
+export function useGroupData(groupId: string, season: number, userId?: string) {
   const [loading, setLoading] = useState(true);
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
   const [nflTeams, setNFLTeams] = useState<NFLTeam[]>([]);
@@ -17,7 +17,7 @@ export function useGroupData(groupId: string, userId?: string) {
 
       const [teamsResult, scheduleResult] = await Promise.all([
         supabase.from("nfl_teams").select("*"),
-        supabase.from("nfl_schedule").select("week, home_team_id, away_team_id, locks_at")
+        supabase.from("nfl_schedule").select("week, home_team_id, away_team_id, locks_at").eq("season", season)
       ]);
 
       if (teamsResult.error) throw new Error(`Error fetching NFL teams: ${teamsResult.error.message}`);
@@ -38,7 +38,7 @@ export function useGroupData(groupId: string, userId?: string) {
     } catch (error) {
       console.error("Error fetching NFL data:", error);
     }
-  }, []);
+  }, [season]);
 
   const getAvailableTeamsForUserWeek = useCallback(
     (week: number, userSelections: Selection[]) => {
@@ -115,7 +115,8 @@ export function useGroupData(groupId: string, userId?: string) {
         .from("user_picks")
         .select("week, team_id, status, score, locks_at")
         .eq("user_id", userId)
-        .eq("group_id", groupId);
+        .eq("group_id", groupId)
+        .eq("season", season);
 
       if (error) {
         console.error("Error fetching user selections:", error);
@@ -139,7 +140,7 @@ export function useGroupData(groupId: string, userId?: string) {
     } catch (err) {
       console.error("Error in fetchInitialData:", err);
     }
-  }, [userId, groupId]);
+  }, [userId, groupId, season]);
 
   const fetchGroupSelections = useCallback(async () => {
     if (groupMembers.length === 0) return;
@@ -148,7 +149,8 @@ export function useGroupData(groupId: string, userId?: string) {
       const { data, error } = await supabase
         .from("user_picks")
         .select("user_id, week, team_id, status, score, locks_at")
-        .eq("group_id", groupId);
+        .eq("group_id", groupId)
+        .eq("season", season);
 
       if (error) {
         console.error("Error fetching group selections:", error);
@@ -185,7 +187,7 @@ export function useGroupData(groupId: string, userId?: string) {
     } catch (err) {
       console.error("Error in fetchGroupSelections:", err);
     }
-  }, [groupId, groupMembers]);
+  }, [groupId, groupMembers, season]);
 
   return {
     loading,

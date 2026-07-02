@@ -1,4 +1,5 @@
 import { useGroup } from "@/context/GroupContext";
+import { useSeason } from "@/context/SeasonContext";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
@@ -26,6 +27,7 @@ export default function GroupDash() {
   }
 
   const { groups, refetchGroups } = groupContext;
+  const { currentSeason, currentWeek } = useSeason();
   const userInGroupData = groups?.find((group) => group.group_id === Number(groupId));
 
   const {
@@ -40,7 +42,7 @@ export default function GroupDash() {
     fetchInitialData,
     fetchGroupSelections,
     getAvailableTeamsForUserWeek
-  } = useGroupData(groupId, userInGroupData?.user_id);
+  } = useGroupData(groupId, currentSeason, userInGroupData?.user_id);
 
   const {
     isSubmittingSettings,
@@ -74,7 +76,6 @@ export default function GroupDash() {
   
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showTeamSelector, setShowTeamSelector] = useState<{ [key: number]: boolean }>({});
-  const [currentWeek, setCurrentWeek] = useState(1);
   const [selectedWeek, setSelectedWeek] = useState(currentWeek);
   const [leaveGroupMessage, setLeaveGroupMessage] = useState("");
   const [showLeaveModal, setShowLeaveModal] = useState(false);
@@ -112,33 +113,9 @@ export default function GroupDash() {
 
 
   useEffect(() => {
-    async function fetchCurrentWeek(){
-      const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard')
-      if (!response.ok) {
-        console.error('Failed to fetch NFL current week');
-        return;
-      }
-      const data = await response.json();
-      let curWeek = data?.week?.number || 1;
-      
-      const now = new Date();
-      const year = now.getFullYear();
-      const march1 = new Date(`${year}-03-01T00:00:00Z`);
-      const sep4 = new Date(`${year}-09-04T00:00:00Z`);
-      if(now >= march1 && now <= sep4){
-        curWeek = 1; // Force to week 1 before season starts since ESPN api does weird stuff with HOF game/preseason weeks
-      }
-      setCurrentWeek(curWeek);
-    }
-    fetchCurrentWeek()
-
-  })
-
-
-  useEffect(() => {
     setSelectedWeek(currentWeek);
   }, [currentWeek])
-  
+
   useEffect(() => {
     async function fetchGroupSize(){
       const {data: groupSize, error} = await supabase
@@ -155,7 +132,7 @@ export default function GroupDash() {
     }
   }
   fetchGroupSize()
-  })
+  }, [groupId])
   useEffect(() => {
     fetchNFLTeams();
   }, [fetchNFLTeams]);
@@ -242,6 +219,7 @@ export default function GroupDash() {
         const { data: gameData, error: gameError } = await supabase
           .from('nfl_schedule')
           .select('api_game_id, locks_at')
+          .eq('season', currentSeason)
           .eq('week', week)
           .or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
           .single();
@@ -256,6 +234,7 @@ export default function GroupDash() {
           .upsert({
             user_id: userInGroupData?.user_id,
             group_id: groupId,
+            season: currentSeason,
             week: week,
             team_id: teamId,
             game_id: gameData.api_game_id,
@@ -263,7 +242,7 @@ export default function GroupDash() {
             updated_at: new Date().toISOString(),
             locks_at: gameData.locks_at
           }, {
-            onConflict: 'user_id,group_id,week'
+            onConflict: 'user_id,group_id,season,week'
           })
           .select();
 
@@ -283,6 +262,7 @@ export default function GroupDash() {
           .delete()
           .eq('user_id', userInGroupData?.user_id)
           .eq('group_id', groupId)
+          .eq('season', currentSeason)
           .eq('week', week);
         
         if (error) throw error;

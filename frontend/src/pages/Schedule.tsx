@@ -1,9 +1,11 @@
 import { supabase } from '@/lib/supabase'
+import { useSeason } from '@/context/SeasonContext'
 import type { Game, DateRange } from '@/utils/types'
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function Schedule() {
+  const { currentSeason } = useSeason()
   const [teamNameMap, setTeamNameMap] = useState<Map<string, string>>(new Map())
   const [teamLogoMap, setTeamLogoMap] = useState<Map<string, string>>(new Map())
   const [games, setGames] = useState<Game[]>([])
@@ -17,6 +19,7 @@ export default function Schedule() {
         const { data, error } = await supabase
           .from('nfl_schedule')
           .select('*')
+          .eq('season', currentSeason)
           .order('week', { ascending: true })
           .order('game_time', { ascending: true })
 
@@ -30,9 +33,9 @@ export default function Schedule() {
       }
       setLoading(false)
     }
-    
+
     fetchGames()
-  }, [])
+  }, [currentSeason])
 
   function createWeekMap(): Map<DateRange, number> {
     const weekMap = new Map<DateRange, number>()
