@@ -1,244 +1,226 @@
-// Season rollover: when a new NFL season starts, update app_config
-// (set value to the new year where key = 'current_season') and seed the new
-// schedule with `NFL_SEASON=<year> npm run seed`. No user data changes needed;
-// this function then scrapes and scores the new season automatically.
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
+// Scoring cron (deployed as "nfl-scraper"). Scores user picks for finished
+// games, splitting points when multiple group members picked the same winner
+// (scoringChart is indexed by group size, then by how many members made the
+// same pick).
+//
+// Season rollover: update app_config (key = 'current_season') to the new
+// year; games and picks are scored for that season only.
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-interface TeamMap {
-  [key: string]: string; 
-}
-
-interface GameData {
-  api_game_id: string
-  season: number
-  week: number
-  game_time: string
-  status: string
-  home_team_id: string
-  away_team_id: string
-  winner_id: string | null
-  wave: number
-}
-
-serve(async (req) => {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
+};
+serve(async (req)=>{
   // Handle CORS
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      headers: corsHeaders
+    });
   }
-
+  const scoringChart = [
+    [
+      10,
+      6,
+      4,
+      null,
+      null
+    ],
+    [
+      10,
+      7,
+      5,
+      3,
+      2
+    ],
+    [
+      10,
+      8,
+      6,
+      5,
+      4
+    ],
+    [
+      10,
+      9,
+      7,
+      6,
+      5
+    ] // 8-10 players, index 3
+  ];
+  const groupIndex = {
+    1: 0,
+    2: 0,
+    3: 0,
+    4: 1,
+    5: 1,
+    6: 2,
+    7: 2,
+    8: 3,
+    9: 3,
+    10: 3
+  };
+  const scoreIndex = {
+    1: 0,
+    2: 1,
+    3: 2,
+    4: 3,
+    5: 4,
+    6: 4,
+    7: 4,
+    8: 4,
+    9: 4,
+    10: 4
+  };
+  const supabaseClient = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+  // Detect test mode from query string
+  const url = new URL(req.url);
+  const testMode = url.searchParams.get("test") === "true";
+  console.log(`Running scoring cron — Test Mode: ${testMode}`);
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    // First, get all teams to create a mapping
-    const { data: teams, error: teamsError } = await supabaseClient
-      .from('nfl_teams')
-      .select('id, name')
-
-    if (teamsError) {
-      console.error('Error fetching teams:', teamsError)
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch teams' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Create team name mapping (ESPN name -> UUID)
-    const teamMap: TeamMap = {}
-    teams?.forEach(team => {
-      teamMap[team.name] = team.id
-    })
-
-    const { data: seasonConfig, error: seasonError } = await supabaseClient
-      .from('app_config')
-      .select('value')
-      .eq('key', 'current_season')
-      .single()
-
+    // 0. Determine the current season (single source of truth in app_config)
+    const { data: seasonConfig, error: seasonError } = await supabaseClient.from("app_config").select("value").eq("key", "current_season").single();
     if (seasonError) {
-      console.error('Error fetching current season from app_config:', seasonError)
+      console.error("Error fetching current season from app_config:", seasonError);
     }
-
-    const YEAR = parseInt(seasonConfig?.value ?? Deno.env.get('NFL_SEASON') ?? '2025')
-    const URL = `https://cdn.espn.com/core/nfl/schedule?xhr=1&year=${YEAR}&week=`
-    
-    const allGames: GameData[] = []
-    let processedCount = 0
-
-    // Scrape all weeks
-    for (let week = 1; week <= 18; week++) {
-      try {
-        const response = await fetch(`${URL}${week}`)
-        
-        if (!response.ok) {
-          console.error(`Failed to fetch week ${week}: ${response.status}`)
-          continue
+    const SEASON = parseInt(seasonConfig?.value ?? Deno.env.get("NFL_SEASON") ?? "2025");
+    console.log(`Scoring season ${SEASON}`);
+    // 1. Fetch finished games (skip winner check in test mode)
+    let gamesQuery = supabaseClient.from("nfl_schedule").select("api_game_id, week, winner_id, status").eq("season", SEASON);
+    if (!testMode) {
+      gamesQuery = gamesQuery.in("status", [
+        "Final",
+        "in_progress",
+        "scheduled"
+      ]).not("winner_id", "is", null);
+    }
+    const { data: finishedGames, error: gamesError } = await gamesQuery;
+    if (gamesError) throw gamesError;
+    if (!finishedGames.length) {
+      return jsonResponse({
+        message: "No games found."
+      });
+    }
+    // 2. Get picks for those weeks
+    const weeks = [
+      ...new Set(finishedGames.map((g)=>g.week))
+    ];
+    const { data: picks, error: picksError } = await supabaseClient.from("user_picks").select("id, user_id, week, group_id, team_id, game_id, status").eq("season", SEASON).in("week", weeks);
+    if (picksError) throw picksError;
+    if (!picks.length) {
+      return jsonResponse({
+        message: "No picks found for those weeks."
+      });
+    }
+    // 3. Get group sizes
+    const groupIds = [
+      ...new Set(picks.map((p)=>p.group_id))
+    ];
+    const { data: groupSizes, error: sizeError } = await supabaseClient.from("group_member_counts").select("id, group_size").in("id", groupIds);
+    if (sizeError) throw sizeError;
+    const groupSizeMap = new Map(groupSizes.map((g)=>[
+        g.id,
+        g.group_size
+      ]));
+    // 4. Build combo map
+    const comboMap = new Map();
+    const pickUpdates = [];
+    for (const pick of picks){
+      const game = finishedGames.find((g)=>g.api_game_id === pick.game_id);
+      if (!game) continue;
+      const isCorrect = game.winner_id && pick.team_id === game.winner_id;
+      if (!testMode && pick.status !== (isCorrect ? "correct" : "incorrect")) {
+        pickUpdates.push({
+          id: pick.id,
+          group_id: pick.group_id,
+          status: isCorrect ? "correct" : "incorrect",
+          user_id: pick.user_id
+        });
+      }
+      const key = `${pick.week}-${pick.group_id}`;
+      if (!comboMap.has(key)) {
+        comboMap.set(key, {
+          week: pick.week,
+          group_id: pick.group_id,
+          groupSize: groupSizeMap.get(pick.group_id) || 0,
+          teamCounts: new Map(),
+          picks: []
+        });
+      }
+      const combo = comboMap.get(key);
+      combo.teamCounts.set(pick.team_id, (combo.teamCounts.get(pick.team_id) || 0) + 1);
+      combo.picks.push(pick);
+    }
+    // 5. Log combos in test mode
+    if (testMode) {
+      for (const combo of comboMap.values()){
+        console.log(`Group ID: ${combo.group_id}, Group Size: ${combo.groupSize}, TeamMap: ${JSON.stringify(Object.fromEntries(combo.teamCounts))}`);
+      }
+    }
+    // 6. Calculate scores
+    const scoreUpdates = [];
+    for (const combo of comboMap.values()){
+      const { groupSize, teamCounts, picks } = combo;
+      for (const pick of picks){
+        const pickCount = teamCounts.get(pick.team_id) || 0;
+        let score = 0;
+        const game = finishedGames.find((g)=>g.api_game_id === pick.game_id);
+        const isCorrect = game && game.winner_id && pick.team_id === game.winner_id;
+        if(isCorrect){
+          score = scoringChart[groupIndex[groupSize]][scoreIndex[pickCount]];
         }
-
-        const data = await response.json()
-        
-        // Process games for this week
-        for (const [dateStr, dateData] of Object.entries(data.content.schedule)) {
-          for (const games of (dateData as any).games) {
-            for (const game of games.competitions) {
-              
-              // Extract team names and find their UUIDs
-              const homeTeamName = game.competitors[0].team.name
-              const awayTeamName = game.competitors[1].team.name
-              
-              const homeTeamId = teamMap[homeTeamName]
-              const awayTeamId = teamMap[awayTeamName]
-              
-              if (!homeTeamId || !awayTeamId) {
-                console.warn(`Missing team mapping for: ${homeTeamName} vs ${awayTeamName}`)
-                continue
-              }
-
-              // Determine winner
-              let winnerId = null
-              if (game.competitors[0].winner) {
-                winnerId = homeTeamId
-              } else if (game.competitors[1].winner) {
-                winnerId = awayTeamId
-              }
-
-              // Parse game time
-              const gameTime = game.date ? new Date(game.date).toISOString() : null
-              
-              // Map ESPN status to your status values
-              let status = 'scheduled'
-              if (game.status.type.completed) {
-                status = 'final'
-              } else if (game.status.type.state === 'in') {
-                status = 'in_progress'
-              }
-
-              const gameData: GameData = {
-                api_game_id: game.id,
-                season: YEAR,
-                week: week,
-                game_time: gameTime || new Date().toISOString(),
-                status: status,
-                home_team_id: homeTeamId,
-                away_team_id: awayTeamId,
-                winner_id: winnerId,
-                wave: 0 // Default wave value
-              }
-              
-              allGames.push(gameData)
-              processedCount++
-            }
-          }
+        console.log(score);
+        if (!testMode) {
+          scoreUpdates.push({
+            id: pick.id,
+            group_id: pick.group_id,
+            score,
+            user_id: pick.user_id
+          });
         }
-      } catch (error) {
-        console.error(`Error processing week ${week}:`, error)
       }
     }
-
-    if (allGames.length > 0) {
-      const { data, error } = await supabaseClient
-        .from('nfl_schedule')
-        .upsert(allGames, { 
-          onConflict: 'api_game_id',
-          ignoreDuplicates: false 
-        })
-
-      if (error) {
-        console.error('Database error:', error)
-        return new Response(
-          JSON.stringify({ error: 'Database insertion failed', details: error.message }),
-          { 
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        )
+    // 7. Write updates if not in test mode
+    if (!testMode) {
+      // Update status for each pick individually
+      if (pickUpdates.length) {
+        for (const update of pickUpdates){
+          const { error: statusError } = await supabaseClient.from("user_picks").update({
+            status: update.status
+          }).eq("id", update.id);
+          if (statusError) throw statusError;
+        }
       }
-
-      console.log(`Successfully processed ${processedCount} games`)
-      
-
-      await updateUserPicksStatus(supabaseClient, YEAR)
+      // Update scores for each pick individually
+      if (scoreUpdates.length) {
+        for (const update of scoreUpdates){
+          const { error: scoreError } = await supabaseClient.from("user_picks").update({
+            score: update.score
+          }).eq("id", update.id);
+          if (scoreError) throw scoreError;
+        }
+      }
     }
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        gamesProcessed: processedCount,
-        message: 'NFL data updated successfully'
-      }),
-      { 
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    )
-
-  } catch (error) {
-    console.error('Function error:', error)
-    return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    )
+    return jsonResponse({
+      message: testMode ? "Test mode complete — see logs for group data" : "Scoring cron completed",
+      picksUpdated: pickUpdates.length,
+      scoresUpdated: scoreUpdates.length,
+      season: SEASON
+    });
+  } catch (err) {
+    console.error(err);
+    return jsonResponse({
+      error: err.message
+    }, 500);
   }
-})
-
-// Helper function to update user picks status when games finish
-async function updateUserPicksStatus(supabaseClient: any, season: number) {
-  try {
-    // Get all finished games that have winners
-    const { data: finishedGames, error: gamesError } = await supabaseClient
-      .from('nfl_schedule')
-      .select('api_game_id, winner_id')
-      .eq('season', season)
-      .eq('status', 'final')
-      .not('winner_id', 'is', null)
-
-    if (gamesError || !finishedGames) {
-      console.error('Error fetching finished games:', gamesError)
-      return
-    }
-
-    // Update user picks for finished games
-    for (const game of finishedGames) {
-      // Update correct picks
-      await supabaseClient
-        .from('user_picks')
-        .update({ 
-          status: 'correct',
-          score: 1,
-          updated_at: new Date().toISOString()
-        })
-        .eq('season', season)
-        .eq('game_id', game.api_game_id)
-        .eq('team_id', game.winner_id)
-        .eq('status', 'pending')
-
-      // Update incorrect picks
-      await supabaseClient
-        .from('user_picks')
-        .update({ 
-          status: 'incorrect',
-          score: 0,
-          updated_at: new Date().toISOString()
-        })
-        .eq('season', season)
-        .eq('game_id', game.api_game_id)
-        .neq('team_id', game.winner_id)
-        .eq('status', 'pending')
-    }
-
-    console.log(`Updated picks for ${finishedGames.length} finished games`)
-  } catch (error) {
-    console.error('Error updating user picks:', error)
-  }
+});
+// Helper for JSON responses
+function jsonResponse(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json"
+    },
+    status
+  });
 }
