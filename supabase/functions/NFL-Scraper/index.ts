@@ -1,3 +1,7 @@
+// Season rollover: when a new NFL season starts, update app_config
+// (set value to the new year where key = 'current_season') and seed the new
+// schedule with `NFL_SEASON=<year> npm run seed`. No user data changes needed;
+// this function then scrapes and scores the new season automatically.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -12,6 +16,7 @@ interface TeamMap {
 
 interface GameData {
   api_game_id: string
+  season: number
   week: number
   game_time: string
   status: string
@@ -52,7 +57,17 @@ serve(async (req) => {
       teamMap[team.name] = team.id
     })
 
-    const YEAR = 2025
+    const { data: seasonConfig, error: seasonError } = await supabaseClient
+      .from('app_config')
+      .select('value')
+      .eq('key', 'current_season')
+      .single()
+
+    if (seasonError) {
+      console.error('Error fetching current season from app_config:', seasonError)
+    }
+
+    const YEAR = parseInt(seasonConfig?.value ?? Deno.env.get('NFL_SEASON') ?? '2025')
     const URL = `https://cdn.espn.com/core/nfl/schedule?xhr=1&year=${YEAR}&week=`
     
     const allGames: GameData[] = []
@@ -108,6 +123,7 @@ serve(async (req) => {
 
               const gameData: GameData = {
                 api_game_id: game.id,
+                season: YEAR,
                 week: week,
                 game_time: gameTime || new Date().toISOString(),
                 status: status,
@@ -149,7 +165,7 @@ serve(async (req) => {
       console.log(`Successfully processed ${processedCount} games`)
       
 
-      await updateUserPicksStatus(supabaseClient)
+      await updateUserPicksStatus(supabaseClient, YEAR)
     }
 
     return new Response(
@@ -177,12 +193,13 @@ serve(async (req) => {
 })
 
 // Helper function to update user picks status when games finish
-async function updateUserPicksStatus(supabaseClient: any) {
+async function updateUserPicksStatus(supabaseClient: any, season: number) {
   try {
     // Get all finished games that have winners
     const { data: finishedGames, error: gamesError } = await supabaseClient
       .from('nfl_schedule')
       .select('api_game_id, winner_id')
+      .eq('season', season)
       .eq('status', 'final')
       .not('winner_id', 'is', null)
 
@@ -201,6 +218,7 @@ async function updateUserPicksStatus(supabaseClient: any) {
           score: 1,
           updated_at: new Date().toISOString()
         })
+        .eq('season', season)
         .eq('game_id', game.api_game_id)
         .eq('team_id', game.winner_id)
         .eq('status', 'pending')
@@ -213,6 +231,7 @@ async function updateUserPicksStatus(supabaseClient: any) {
           score: 0,
           updated_at: new Date().toISOString()
         })
+        .eq('season', season)
         .eq('game_id', game.api_game_id)
         .neq('team_id', game.winner_id)
         .eq('status', 'pending')

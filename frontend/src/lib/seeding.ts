@@ -11,6 +11,7 @@ interface Game {
   away_team_id: string
   game_time: string
   status: string
+  season: number
   week: number
   locks_at: string
   winner_id?: string | null
@@ -42,7 +43,8 @@ async function getTeamMapping(): Promise<Map<string, string>> {
 }
 
 async function fetchScheduleData(): Promise<void> {
-  const YEAR = 2025;
+  // Run with NFL_SEASON=<year> to seed a different season (defaults to 2025)
+  const YEAR = parseInt(process.env.NFL_SEASON ?? '2025');
   const SEASON_TYPE = 2; 
   const BASE_URL = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${YEAR}&seasontype=${SEASON_TYPE}&week=`
 
@@ -98,6 +100,7 @@ async function fetchScheduleData(): Promise<void> {
         away_team_id: awayTeamId,
         game_time: event.date || '',
         status: event.status?.type?.description || '',
+        season: YEAR,
         week: gameWeek,
         locks_at: new Date(new Date(event.date).getTime() - 30 * 60000).toISOString(),
         winner_id: winnerId
