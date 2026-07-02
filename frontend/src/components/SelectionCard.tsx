@@ -10,6 +10,7 @@ interface SelectionCardProps {
   onToggleTeamSelector: (week: number) => void;
   onTeamSelection: (week: number, teamId: string | null) => Promise<void>;
   getStatusIcon: (status: 'correct' | 'incorrect' | 'pending') => React.ReactNode;
+  readOnly?: boolean;
 }
 
 export function SelectionCard({
@@ -20,10 +21,12 @@ export function SelectionCard({
   showTeamSelector,
   onToggleTeamSelector,
   onTeamSelection,
-  getStatusIcon
+  getStatusIcon,
+  readOnly = false
 }: SelectionCardProps) {
 
-  const isLocked = currentWeek > selection.week || 
+  // readOnly covers past-season viewing, where empty weeks have no locks_at
+  const isLocked = readOnly || currentWeek > selection.week ||
     (selection.locks_at !== null && new Date(selection.locks_at) < new Date());
   
   return (

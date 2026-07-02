@@ -11,6 +11,7 @@ interface SelectionsListProps {
   onTeamSelection: (week: number, teamId: string | null) => Promise<void>;
   getStatusIcon: (status: 'correct' | 'incorrect' | 'pending') => React.ReactNode;
   getSelectedTeam: (teamId: string | null) => NFLTeam | null;
+  readOnly?: boolean;
 }
 
 export function SelectionsList({
@@ -21,7 +22,8 @@ export function SelectionsList({
   onToggleTeamSelector,
   onTeamSelection,
   getStatusIcon,
-  getSelectedTeam
+  getSelectedTeam,
+  readOnly = false
 }: SelectionsListProps) {
   return (
     <div className="bg-white/5 backdrop-blur-xl p-4 md:p-6 rounded-2xl border border-white/10 shadow-2xl">
@@ -43,6 +45,7 @@ export function SelectionsList({
               onToggleTeamSelector={onToggleTeamSelector}
               onTeamSelection={onTeamSelection}
               getStatusIcon={getStatusIcon}
+              readOnly={readOnly}
             />
           );
         })}

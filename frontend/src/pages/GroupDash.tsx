@@ -28,6 +28,9 @@ export default function GroupDash() {
 
   const { groups, refetchGroups } = groupContext;
   const { currentSeason, currentWeek } = useSeason();
+  const [viewingSeason, setViewingSeason] = useState(currentSeason);
+  const [availableSeasons, setAvailableSeasons] = useState<number[]>([currentSeason]);
+  const isCurrentSeason = viewingSeason === currentSeason;
   const userInGroupData = groups?.find((group) => group.group_id === Number(groupId));
 
   const {
@@ -42,7 +45,7 @@ export default function GroupDash() {
     fetchInitialData,
     fetchGroupSelections,
     getAvailableTeamsForUserWeek
-  } = useGroupData(groupId, currentSeason, userInGroupData?.user_id);
+  } = useGroupData(groupId, viewingSeason, userInGroupData?.user_id);
 
   const {
     isSubmittingSettings,
@@ -115,6 +118,29 @@ export default function GroupDash() {
   useEffect(() => {
     setSelectedWeek(currentWeek);
   }, [currentWeek])
+
+  useEffect(() => {
+    setViewingSeason(currentSeason);
+  }, [groupId, currentSeason])
+
+  useEffect(() => {
+    async function fetchAvailableSeasons() {
+      const { data, error } = await supabase
+        .from('user_picks')
+        .select('season')
+        .eq('group_id', groupId);
+
+      if (error) {
+        console.error("Error fetching group seasons:", error);
+        return;
+      }
+
+      const seasons = [...new Set([...(data ?? []).map((row) => row.season), currentSeason])]
+        .sort((a, b) => b - a);
+      setAvailableSeasons(seasons);
+    }
+    fetchAvailableSeasons()
+  }, [groupId, currentSeason])
 
   useEffect(() => {
     async function fetchGroupSize(){
@@ -206,7 +232,9 @@ export default function GroupDash() {
   };
 
   const handleTeamSelection = async (week: number, teamId: string | null) => {
-    setSelections(prev => prev.map(selection => 
+    if (!isCurrentSeason) return;
+
+    setSelections(prev => prev.map(selection =>
       selection.week === week 
         ? { ...selection, teamId: teamId === selection.teamId ? null : teamId } 
         : selection
@@ -409,6 +437,29 @@ export default function GroupDash() {
           </div>
         )}
 
+        {availableSeasons.length > 1 && (
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-300">Season:</label>
+            <select
+              value={viewingSeason}
+              onChange={(e) => setViewingSeason(Number(e.target.value))}
+              className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {availableSeasons.map((season) => (
+                <option key={season} value={season}>{season}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {!isCurrentSeason && (
+          <div className="bg-yellow-600/20 border border-yellow-600/30 p-4 rounded-xl">
+            <p className="text-yellow-200">
+              Viewing the {viewingSeason} season. Past seasons are read-only.
+            </p>
+          </div>
+        )}
+
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SelectionsList
             selections={selections}
@@ -419,6 +470,7 @@ export default function GroupDash() {
             onTeamSelection={handleTeamSelection}
             getStatusIcon={getStatusIcon}
             getSelectedTeam={getSelectedTeam}
+            readOnly={!isCurrentSeason}
           />
 
           <Standings
