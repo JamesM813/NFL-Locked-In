@@ -109,81 +109,25 @@ export default function Groups() {
   async function handleJoinSubmit(e: React.FormEvent) {
     e.preventDefault()
     setIsLoading(true)
+    setErrorMessage("")
 
-    const {data: joinCodeData, error: joinError} = await supabase
-      .from('group_join_codes')
-      .select('*')
-      .eq('join_code', joinCode)
-      .single()
+    // All validation (code exists, not expired, not already a member, group not
+    // full) runs server-side in the join_group_by_code SECURITY DEFINER function.
+    // This keeps join codes non-enumerable — the client never reads the codes table.
+    const { data: joinedGroupId, error } = await supabase
+      .rpc('join_group_by_code', { p_code: joinCode })
 
-    if (joinError) {
-      setErrorMessage("Invalid join code. Please try again.")
+    if (error) {
+      setErrorMessage(error.message || "Failed to join the group. Please try again later.")
       setIsLoading(false)
       return
     }
 
-    if (!joinCodeData) {
-      setErrorMessage("Group not found. Please check the join code.")
-      setIsLoading(false)
-      return
-    }
-
-    if( new Date(joinCodeData.expires_at) < new Date() ) {
-      setErrorMessage("This join code has expired. Please contact the group admin for a new code.")
-      setIsLoading(false)
-      return
-    }
-    
-    const { data: groupData, error: groupDataError} = await supabase
-    .from('groups')
-    .select('group_size')
-    .eq('id', joinCodeData.group_id)
-    .single()
-
-    if(groupDataError) setErrorMessage("Failed to retrieve group data. Please try again later.")
-    if (groupData && groupData.group_size >= 10) {
-      setErrorMessage("This group is already full. Please try another group.")
-      setIsLoading(false)
-      return
-    }
-
-    if (joinCodeData.join_code == joinCode) {
-
-      const { data: profileGroupData, error: profileGroupError } = await supabase
-        .from('profile_groups')
-        .select('*')
-        .eq('group_id', joinCodeData.group_id)
-        
-
-        for (const group of profileGroupData!) {
-          if (group.user_id === profile?.id) {
-            setErrorMessage("You are already a member of this group.")
-            setIsLoading(false)
-            return
-          }
-        }
-        
-      if (profileGroupError) {
-        setErrorMessage("Failed to join the group. Please try again later.")
-        setIsLoading(false)
-        return
-      }
-
-      const { error: insertError } = await supabase
-        .from('profile_groups')
-        .insert({
-          user_id: profile?.id,
-          group_id: joinCodeData.group_id
-        })
-      if (insertError) {
-        setErrorMessage("Failed to join the group. Please try again later.")
-        setIsLoading(false)
-        return
-      }
-      await refetchGroups()
-      setIsJoinModalOpen(false)
-    }
+    await refetchGroups()
+    setIsJoinModalOpen(false)
     setIsLoading(false)
+    toast.success("You successfully joined the group!", { duration: 3000, position: "top-center", style: { background: "#1f2937", color: "#fff" } })
+    navigator(`/group/${joinedGroupId}`)
   }
 
 

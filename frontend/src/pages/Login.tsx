@@ -28,7 +28,10 @@ export default function Login() {
         if (password !== confirmPassword) {
           throw new Error('Passwords do not match!');
         }
-        validatePassword(password)
+        const passwordError = validatePassword(password);
+        if (passwordError) {
+          throw new Error(passwordError);
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
