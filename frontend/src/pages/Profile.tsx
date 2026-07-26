@@ -5,13 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Camera, X, Pencil, Check } from "lucide-react"
 import { AvatarPicker } from "@/components/AvatarPicker"
 import { toast } from "react-hot-toast"
-
-const PRESET_AVATAR_URLS = [1, 2, 3, 4, 5, 6, 7].map((i) =>
-  supabase
-    .storage
-    .from("preset-avatars")
-    .getPublicUrl(`avatar-${i}.png`).data.publicUrl
-)
+import { PRESET_PROFILE_AVATARS } from "@/lib/avatars"
 
 export default function Profile() {
   const [userData, setUserData] = useState<profileData | null>(null)
@@ -224,7 +218,7 @@ export default function Profile() {
         onClose={() => setIsModalOpen(false)}
         currentAvatarUrl={userData?.profile_picture_url}
         fallbackAvatarUrl="default-avatar.png"
-        presetAvatars={PRESET_AVATAR_URLS}
+        presetAvatars={PRESET_PROFILE_AVATARS}
         uploading={uploading}
         onSelectPreset={handlePresetClick}
         onUploadFile={uploadAvatar}

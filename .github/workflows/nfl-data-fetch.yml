@@ -75,6 +75,7 @@ jobs:
         response=$(curl -w "\n%{http_code}" \
           -L -X POST '${{ secrets.SUPABASE_URL }}/functions/v1/test-fetch' \
           -H 'Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}' \
+          -H 'x-cron-secret: ${{ secrets.CRON_SECRET }}' \
           -H 'Content-Type: application/json' \
           --data '{
             "name": "GitHub Actions",

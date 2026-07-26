@@ -9,7 +9,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret"
 };
 serve(async (req)=>{
   // Handle CORS
@@ -17,6 +17,19 @@ serve(async (req)=>{
     return new Response("ok", {
       headers: corsHeaders
     });
+  }
+  // Invocation guard: the anon key alone is public (it ships in the frontend
+  // bundle), so when a CRON_SECRET is configured for this function, require
+  // callers to also send it in the x-cron-secret header. Fails open when the
+  // secret is not configured so a fresh deploy doesn't break the cron.
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  if (cronSecret && req.headers.get("x-cron-secret") !== cronSecret) {
+    return jsonResponse({
+      error: "Unauthorized"
+    }, 401);
+  }
+  if (!cronSecret) {
+    console.warn("CRON_SECRET is not set — anyone with the public anon key can invoke this function.");
   }
   const scoringChart = [
     [

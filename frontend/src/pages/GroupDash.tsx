@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { PRESET_GROUP_AVATARS } from "@/lib/avatars";
 import { useGroupDashboard } from "@/hooks/useGroupDashboard";
 import { GroupHeader } from "@/components/GroupHeader";
 import { SelectionsList } from "@/components/SelectionsList";
@@ -6,13 +6,6 @@ import { Standings } from "@/components/Standings";
 import { GroupPicks } from "@/components/GroupPicks";
 import { SettingsModal } from "@/components/SettingsModal";
 import { LeaveGroupModal } from "@/components/LeaveGroupModal";
-
-const PRESET_GROUP_AVATARS = [1, 2, 3, 4].map((i) =>
-  supabase
-    .storage
-    .from("preset-group-avatars")
-    .getPublicUrl(`avatar-${i}.png`).data.publicUrl
-);
 
 const getStatusIcon = (status: 'correct' | 'incorrect' | 'pending') => {
   switch (status) {
