@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { GroupMember } from '@/utils/types';
 
-export function useGroupMembers(groupId: string) {
+export function useGroupMembers(groupId: number) {
   const [loading, setLoading] = useState(true);
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
 

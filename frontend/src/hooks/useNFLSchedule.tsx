@@ -1,11 +1,10 @@
-/*eslint-disable*/
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { NFLTeam, Selection } from '@/utils/types';
+import type { NFLTeam, ScheduleGame, Selection } from '@/utils/types';
 
 export function useNFLSchedule(season: number) {
   const [nflTeams, setNFLTeams] = useState<NFLTeam[]>([]);
-  const [nflSchedule, setNFLSchedule] = useState<any[]>([]);
+  const [nflSchedule, setNFLSchedule] = useState<ScheduleGame[]>([]);
 
   const fetchNFLData = useCallback(async () => {
     try {
@@ -18,7 +17,7 @@ export function useNFLSchedule(season: number) {
       if (scheduleResult.error) throw new Error(`Error fetching NFL schedule: ${scheduleResult.error.message}`);
 
       if (teamsResult.data) {
-        const teams = teamsResult.data.map((team: any) => ({
+        const teams = teamsResult.data.map((team: NFLTeam) => ({
           id: team.id,
           logo_url: team.logo_url,
           name: team.name

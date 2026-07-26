@@ -12,6 +12,8 @@ export type Game = {
     winner_id: string | null
 }
   
+export type ScheduleGame = Pick<Game, 'week' | 'home_team_id' | 'away_team_id' | 'locks_at'>
+
 export type DateRange = {
     start: Date
     end: Date
@@ -64,6 +66,25 @@ export type Selection = {
     week: number;
     teamId: string | null;
     status: 'correct' | 'incorrect' | 'pending';
-    score: string;
-    locks_at: Date | null;
+    score: number | string;
+    locks_at: string | null;
+  }
+
+// Row shape returned by user_picks queries in useUserSelections
+export type UserPickRow = {
+    user_id: string;
+    week: number;
+    team_id: string | null;
+    status: 'correct' | 'incorrect' | 'pending' | null;
+    score: number | null;
+    locks_at: string | null;
+  }
+
+// Row shape of the group_member_counts view used for public group discovery
+export type publicGroupData = {
+    id: number;
+    name: string;
+    group_picture_url: string | null;
+    group_size: number;
+    is_public: boolean;
   }

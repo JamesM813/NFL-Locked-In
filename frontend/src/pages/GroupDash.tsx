@@ -65,22 +65,24 @@ const INITIAL_SETTINGS_FORM = {
 
 export default function GroupDash() {
   const nav = useNavigate();
-  const { groupId } = useParams();
+  const { groupId: groupIdParam } = useParams();
   const groupContext = useGroup();
-  
+
   if (!groupContext) {
     throw new Error("useGroup must be used within a GroupProvider");
   }
-  if (!groupId) {
+  if (!groupIdParam) {
     throw new Error("Group ID is required");
   }
+  // The route param is a string; the DB stores group ids as numbers.
+  const groupId = Number(groupIdParam);
 
   const { groups, refetchGroups } = groupContext;
   const { currentSeason, currentWeek } = useSeason();
   const [viewingSeason, setViewingSeason] = useState(currentSeason);
   const [availableSeasons, setAvailableSeasons] = useState<number[]>([currentSeason]);
   const isCurrentSeason = viewingSeason === currentSeason;
-  const userInGroupData = groups?.find((group) => group.group_id === Number(groupId));
+  const userInGroupData = groups?.find((group) => group.group_id === groupId);
 
   const {
     loading,

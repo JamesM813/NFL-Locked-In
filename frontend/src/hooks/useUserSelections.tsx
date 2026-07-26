@@ -1,7 +1,6 @@
-/*eslint-disable*/
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { GroupMember, Selection } from '@/utils/types';
+import type { GroupMember, Selection, UserPickRow } from '@/utils/types';
 
 const TOTAL_WEEKS = 18;
 
@@ -16,13 +15,13 @@ function emptySelections(): Selection[] {
 }
 
 export function useUserSelections(
-  groupId: string,
+  groupId: number,
   season: number,
   userId: string | undefined,
   groupMembers: GroupMember[]
 ) {
   const [selections, setSelections] = useState<Selection[]>([]);
-  const [groupPicks, setGroupPicks] = useState<any[]>([]);
+  const [groupPicks, setGroupPicks] = useState<UserPickRow[]>([]);
 
   const fetchUserSelections = useCallback(async () => {
     if (!userId) return;
@@ -43,7 +42,7 @@ export function useUserSelections(
       }
 
       if (data && data.length > 0) {
-        const existingSelections: Selection[] = data.map((item: any) => ({
+        const existingSelections: Selection[] = data.map((item: Omit<UserPickRow, 'user_id'>) => ({
           week: item.week,
           teamId: item.team_id,
           status: item.status || 'pending',
@@ -86,7 +85,7 @@ export function useUserSelections(
       selectionsByUser[member.user_id] = emptySelections();
     });
 
-    groupPicks.forEach((item: any) => {
+    groupPicks.forEach((item) => {
       if (selectionsByUser[item.user_id]) {
         const weekIndex = item.week - 1;
         selectionsByUser[item.user_id][weekIndex] = {

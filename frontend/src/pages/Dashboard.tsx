@@ -4,6 +4,17 @@ import type { profileGroupData } from "@/utils/types"
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 
+// Shape of an article from ESPN's news API (only the fields we read)
+type EspnArticle = {
+  id: string
+  headline: string
+  published: string
+  type: string
+  source?: { name?: string }
+  images?: { url: string }[]
+  links?: { web?: { href?: string } }
+}
+
 export default function Dashboard() {
   const profileContext = useProfile()
   const groupContext = useGroup()
@@ -68,8 +79,7 @@ export default function Dashboard() {
         const data = await response.json()
 
         if(data.articles.length > 0){
-          //eslint-disable-next-line
-          data.articles = data.articles.map((article: any) => ({
+          data.articles = data.articles.map((article: EspnArticle) => ({
             id: article.id,
             title: article.headline,
             source: article.source?.name || 'ESPN',

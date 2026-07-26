@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'react-hot-toast';
 
-export function useGroupActions(groupId: string, refetchGroups: () => Promise<void>) {
+export function useGroupActions(groupId: number, refetchGroups: () => Promise<void>) {
   const [isSubmittingSettings, setIsSubmittingSettings] = useState(false);
 
   const handleInviteMembers = async (isAdmin: boolean, groupSize: number) => {

@@ -5,6 +5,7 @@ import { Plus, X } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/lib/supabase"
 import { toast } from 'react-hot-toast'
+import type { publicGroupData } from "@/utils/types"
 
 export default function Groups() {
 
@@ -20,8 +21,7 @@ export default function Groups() {
   const [joinCode, setJoinCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
-  //eslint-disable-next-line
-  const [publicGroups, setPublicGroups] = useState<any[]>([])
+  const [publicGroups, setPublicGroups] = useState<publicGroupData[]>([])
 
 
   
@@ -72,7 +72,7 @@ export default function Groups() {
     setJoinCode("")
   }
 
-  async function handlePublicJoin(groupId: string) {
+  async function handlePublicJoin(groupId: number) {
     setIsLoading(true)
     setErrorMessage("")
   
@@ -87,9 +87,8 @@ export default function Groups() {
       await refetchGroups()
       navigator(`/group/${groupId}`)
       toast.success("You successfully joined the group!", { duration: 3000, position: "top-center", style: { background: "#1f2937", color: "#fff", }});
-    //eslint-disable-next-line
-    } catch (err: any) {
-      setErrorMessage(err.message || "An unexpected error occurred.")
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred.")
     }
   
     setIsLoading(false)
