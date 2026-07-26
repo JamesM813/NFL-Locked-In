@@ -56,12 +56,8 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    async function refetchData() {
-      await refetchProfiles()
-      await refetchGroups()
-    }
-    refetchData()
-  }, [])
+    Promise.all([refetchProfiles(), refetchGroups()])
+  }, [refetchProfiles, refetchGroups])
 
   useEffect(() => {
     async function fetchNews() {

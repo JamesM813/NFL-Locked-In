@@ -26,51 +26,41 @@ export default function Groups() {
 
   
   useEffect(() => {
-    if (!profile?.id) {
+    const userId = profile?.id
+    if (!userId) {
       return;
     }
-    async function fetchGroups() {
+    async function fetchPublicGroups() {
+      const [userGroupsResult, publicGroupsResult] = await Promise.all([
+        supabase
+          .from('profile_groups')
+          .select('group_id')
+          .eq('user_id', userId),
+        supabase
+          .from('group_member_counts')
+          .select('*')
+          .eq('is_public', true)
+          .lt('group_size', 10)
+      ])
 
-      const { data: userGroupData, error: userError } = await supabase
-        .from('profile_groups')
-        .select('*')
-        .eq('user_id', profile?.id)
-  
-      if (userError) {
-        console.error("Error fetching user groups:", userError)
+      if (userGroupsResult.error) {
+        console.error("Error fetching user groups:", userGroupsResult.error)
         return
       }
-      
-  
-      const userGroupIds = new Set(userGroupData?.map(pg => pg.group_id))
-      
-      const { data: publicGroupData, error: publicError } = await supabase
-        .from('group_member_counts')
-        .select('*')
-        .eq('is_public', true)
-        .lt('group_size', 10)
-  
-      if (publicError) {
-        console.error("Error fetching public groups:", publicError)
+      if (publicGroupsResult.error) {
+        console.error("Error fetching public groups:", publicGroupsResult.error)
         return
       }
 
-      const filteredGroups = publicGroupData?.filter(group => !userGroupIds.has(group.id)) || []
-  
+      const userGroupIds = new Set(userGroupsResult.data?.map(pg => pg.group_id))
+      const filteredGroups = publicGroupsResult.data?.filter(group => !userGroupIds.has(group.id)) || []
+
       setPublicGroups(filteredGroups)
     }
-  
-    async function init() {
-      
-      await refetchProfiles();
-      refetchGroups();
-      fetchGroups();
 
-    }
+    Promise.all([refetchProfiles(), refetchGroups(), fetchPublicGroups()]);
 
-    init();
-
-  }, [profile?.id])
+  }, [profile?.id, refetchProfiles, refetchGroups])
 
   function handleCreateGroup() {
     navigator('/create-group')

@@ -1,5 +1,5 @@
 /*eslint-disable*/
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { GroupMember, Selection } from '@/utils/types';
 
@@ -22,7 +22,7 @@ export function useUserSelections(
   groupMembers: GroupMember[]
 ) {
   const [selections, setSelections] = useState<Selection[]>([]);
-  const [groupSelections, setGroupSelections] = useState<{[userId: string]: Selection[]}>({});
+  const [groupPicks, setGroupPicks] = useState<any[]>([]);
 
   const fetchUserSelections = useCallback(async () => {
     if (!userId) return;
@@ -62,8 +62,6 @@ export function useUserSelections(
   }, [userId, groupId, season]);
 
   const fetchGroupSelections = useCallback(async () => {
-    if (groupMembers.length === 0) return;
-
     try {
       const { data, error } = await supabase
         .from("user_picks")
@@ -76,31 +74,33 @@ export function useUserSelections(
         return;
       }
 
-      if (data && data.length > 0) {
-        const selectionsByUser: {[userId: string]: Selection[]} = {};
-        groupMembers.forEach(member => {
-          selectionsByUser[member.user_id] = emptySelections();
-        });
-
-        data.forEach((item: any) => {
-          if (selectionsByUser[item.user_id]) {
-            const weekIndex = item.week - 1;
-            selectionsByUser[item.user_id][weekIndex] = {
-              week: item.week,
-              teamId: item.team_id,
-              status: item.status || 'pending',
-              score: item.score || '-',
-              locks_at: item.locks_at
-            };
-          }
-        });
-
-        setGroupSelections(selectionsByUser);
-      }
+      setGroupPicks(data ?? []);
     } catch (err) {
       console.error("Error in fetchGroupSelections:", err);
     }
-  }, [groupId, groupMembers, season]);
+  }, [groupId, season]);
+
+  const groupSelections = useMemo(() => {
+    const selectionsByUser: {[userId: string]: Selection[]} = {};
+    groupMembers.forEach(member => {
+      selectionsByUser[member.user_id] = emptySelections();
+    });
+
+    groupPicks.forEach((item: any) => {
+      if (selectionsByUser[item.user_id]) {
+        const weekIndex = item.week - 1;
+        selectionsByUser[item.user_id][weekIndex] = {
+          week: item.week,
+          teamId: item.team_id,
+          status: item.status || 'pending',
+          score: item.score || '-',
+          locks_at: item.locks_at
+        };
+      }
+    });
+
+    return selectionsByUser;
+  }, [groupMembers, groupPicks]);
 
   useEffect(() => {
     fetchUserSelections();
