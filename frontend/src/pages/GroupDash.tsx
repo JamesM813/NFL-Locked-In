@@ -1,6 +1,6 @@
 import { useGroup } from "@/context/GroupContext";
 import { useSeason } from "@/context/SeasonContext";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "react-hot-toast";
@@ -13,6 +13,13 @@ import { GroupPicks } from "@/components/GroupPicks";
 import { SettingsModal } from "@/components/SettingsModal";
 import { LeaveGroupModal } from "@/components/LeaveGroupModal";
 import { useNavigate } from "react-router-dom";
+
+const PRESET_GROUP_AVATARS = [1, 2, 3, 4].map((i) =>
+  supabase
+    .storage
+    .from("preset-group-avatars")
+    .getPublicUrl(`avatar-${i}.png`).data.publicUrl
+);
 
 export default function GroupDash() {
   const nav = useNavigate();
@@ -92,9 +99,9 @@ export default function GroupDash() {
   });
 
 
-  const calculateMemberScores = () => {
+  const memberScores = useMemo(() => {
     const scores: { [key: string]: number } = {};
-    
+
     if (Array.isArray(groupMembers)) {
       groupMembers.forEach(member => {
         scores[member.user_id] = 0;
@@ -110,9 +117,9 @@ export default function GroupDash() {
         }
       });
     }
-    
+
     return scores;
-  };
+  }, [groupMembers, groupSelections]);
 
 
   useEffect(() => {
@@ -300,9 +307,8 @@ export default function GroupDash() {
           position: "top-center",
         });
       }
-      await fetchInitialData();
-      await fetchGroupSelections();
-      
+      await Promise.all([fetchInitialData(), fetchGroupSelections()]);
+
     } catch (error) {
       console.error("Update failed:", error);
       setSelections(prev => prev.map(selection => 
@@ -476,7 +482,7 @@ export default function GroupDash() {
           <Standings
             loading={loading}
             groupMembers={groupMembers}
-            memberScores={calculateMemberScores()}
+            memberScores={memberScores}
           />
         </section>
 
@@ -499,13 +505,7 @@ export default function GroupDash() {
           onSelectPresetAvatar={handleSelectPresetAvatar}
           onUploadProfilePicture={handleUploadProfilePicture}
           onDeleteGroup={userInGroupData?.is_admin ? handleDeleteGroup : undefined}
-          presetAvatars={[1,2,3,4].map((i) => {
-            const presetUrl = supabase
-                  .storage
-                  .from("preset-group-avatars")
-                  .getPublicUrl(`avatar-${i}.png`).data.publicUrl
-            return presetUrl
-          })}
+          presetAvatars={PRESET_GROUP_AVATARS}
         />
 
         <LeaveGroupModal

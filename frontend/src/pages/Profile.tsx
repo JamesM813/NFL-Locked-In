@@ -5,6 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Camera, X, Upload, Pencil, Check } from "lucide-react"
 import { Dialog } from "@headlessui/react"
 
+const PRESET_AVATAR_URLS = [1, 2, 3, 4, 5, 6, 7].map((i) =>
+  supabase
+    .storage
+    .from("preset-avatars")
+    .getPublicUrl(`avatar-${i}.png`).data.publicUrl
+)
+
 export default function Profile() {
   const [userData, setUserData] = useState<profileData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -249,10 +256,7 @@ export default function Profile() {
             <div className="space-y-3 md:space-y-4">
               <div className="grid grid-cols-4 gap-3 md:gap-4">
                 {[1, 2, 3, 4].map((i) => {
-                  const presetUrl = supabase
-                  .storage
-                  .from("preset-avatars")
-                  .getPublicUrl(`avatar-${i}.png`).data.publicUrl
+                  const presetUrl = PRESET_AVATAR_URLS[i - 1]
                   const isSelected = selectedAvatar === presetUrl || userData?.profile_picture_url === presetUrl
                   return (
                     <div
@@ -284,10 +288,7 @@ export default function Profile() {
               </div>
               <div className="grid grid-cols-4 gap-3 md:gap-4">
                 {[5, 6, 7].map((i) => {
-                  const presetUrl = supabase
-                  .storage
-                  .from("preset-avatars")
-                  .getPublicUrl(`avatar-${i}.png`).data.publicUrl
+                  const presetUrl = PRESET_AVATAR_URLS[i - 1]
                   const isSelected = selectedAvatar === presetUrl || userData?.profile_picture_url === presetUrl
                   return (
                     <div

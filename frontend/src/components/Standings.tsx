@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { GroupMember } from '@/utils/types';
 
 interface StandingsProps {
@@ -7,11 +8,14 @@ interface StandingsProps {
 }
 
 export function Standings({ loading, groupMembers, memberScores = {} }: StandingsProps) {
-  const sortedMembers = [...groupMembers].sort((a, b) => {
-    const scoreA = memberScores[a.user_id] || 0;
-    const scoreB = memberScores[b.user_id] || 0;
-    return scoreB - scoreA;
-  });
+  const sortedMembers = useMemo(
+    () => [...groupMembers].sort((a, b) => {
+      const scoreA = memberScores[a.user_id] || 0;
+      const scoreB = memberScores[b.user_id] || 0;
+      return scoreB - scoreA;
+    }),
+    [groupMembers, memberScores]
+  );
 
   return (
     <div className="bg-white/5 backdrop-blur-xl p-4 md:p-6 rounded-2xl border border-white/10 shadow-2xl">

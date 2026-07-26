@@ -1,8 +1,75 @@
 import { supabase } from '@/lib/supabase'
 import { useSeason } from '@/context/SeasonContext'
 import type { Game, DateRange } from '@/utils/types'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+
+function createWeekMap(games: Game[]): Map<DateRange, number> {
+  const weekMap = new Map<DateRange, number>()
+
+
+  const gamesByWeek = games.reduce((acc, game) => {
+    if (!acc[game.week]) {
+      acc[game.week] = []
+    }
+    acc[game.week].push(game)
+    return acc
+  }, {} as Record<number, Game[]>)
+
+
+  const sortedWeeks = Object.keys(gamesByWeek)
+    .map(Number)
+    .sort((a, b) => a - b)
+
+  let previousWeekEnd: Date | null = null
+
+  for (const weekNumber of sortedWeeks) {
+    const weekGames = gamesByWeek[weekNumber]
+
+
+    const gameTimes = weekGames.map(game => new Date(game.game_time))
+    const earliestGame = new Date(Math.min(...gameTimes.map(d => d.getTime())))
+    const latestGame = new Date(Math.max(...gameTimes.map(d => d.getTime())))
+
+    let weekStart: Date
+
+    if (previousWeekEnd) {
+
+      weekStart = new Date(previousWeekEnd)
+      weekStart.setDate(weekStart.getDate() + 1)
+      weekStart.setHours(0, 0, 0, 0)
+    } else {
+
+      weekStart = new Date(earliestGame)
+      weekStart.setDate(weekStart.getDate() - 3)
+      weekStart.setHours(0, 0, 0, 0)
+    }
+
+
+    const weekEnd = new Date(latestGame)
+    weekEnd.setHours(23, 59, 59, 999)
+
+    const dateRange: DateRange = { start: weekStart, end: weekEnd }
+    weekMap.set(dateRange, weekNumber)
+
+
+    previousWeekEnd = new Date(weekEnd)
+  }
+
+  return weekMap
+}
+
+function getCurrentWeek(games: Game[]): number {
+  const now = new Date()
+
+  const map = createWeekMap(games)
+  for (const [dateRange, week] of map.entries()) {
+    if (now >= dateRange.start && now <= dateRange.end) {
+      return week;
+    }
+  }
+  return 1;
+}
 
 export default function Schedule() {
   const { currentSeason } = useSeason()
@@ -37,84 +104,23 @@ export default function Schedule() {
     fetchGames()
   }, [currentSeason])
 
-  function createWeekMap(): Map<DateRange, number> {
-    const weekMap = new Map<DateRange, number>()
-    
-
-    const gamesByWeek = games.reduce((acc, game) => {
-      if (!acc[game.week]) {
-        acc[game.week] = []
-      }
-      acc[game.week].push(game)
-      return acc
-    }, {} as Record<number, Game[]>)
-
-
-    const sortedWeeks = Object.keys(gamesByWeek)
-      .map(Number)
-      .sort((a, b) => a - b)
-
-    let previousWeekEnd: Date | null = null
-
-    for (const weekNumber of sortedWeeks) {
-      const weekGames = gamesByWeek[weekNumber]
-      
-
-      const gameTimes = weekGames.map(game => new Date(game.game_time))
-      const earliestGame = new Date(Math.min(...gameTimes.map(d => d.getTime())))
-      const latestGame = new Date(Math.max(...gameTimes.map(d => d.getTime())))
-
-      let weekStart: Date
-      
-      if (previousWeekEnd) {
-
-        weekStart = new Date(previousWeekEnd)
-        weekStart.setDate(weekStart.getDate() + 1)
-        weekStart.setHours(0, 0, 0, 0) 
-      } else {
-       
-        weekStart = new Date(earliestGame)
-        weekStart.setDate(weekStart.getDate() - 3)
-        weekStart.setHours(0, 0, 0, 0)
-      }
-
-
-      const weekEnd = new Date(latestGame)
-      weekEnd.setHours(23, 59, 59, 999) 
-
-      const dateRange: DateRange = { start: weekStart, end: weekEnd }
-      weekMap.set(dateRange, weekNumber)
-      
-
-      previousWeekEnd = new Date(weekEnd)
-    }
-
-    return weekMap
-  }
-
-  function getCurrentWeek(): number {
-    const now = new Date()
-  
-    const map = createWeekMap()
-    for (const [dateRange, week] of map.entries()) {
-      if (now >= dateRange.start && now <= dateRange.end) {
-        return week;
-      }
-    }
-    return 1; 
-  }
-
   useEffect(() => {
     if (games.length > 0) {
-      const currentWeek = getCurrentWeek();
+      const currentWeek = getCurrentWeek(games);
       setSelectedWeek(currentWeek);
     }
   }, [games])
 
 
-  const availableWeeks = [...new Set(games.map(game => game.week))].sort((a, b) => a - b)
-  
-  const filteredGames = games.filter(game => game.week === selectedWeek)
+  const availableWeeks = useMemo(
+    () => [...new Set(games.map(game => game.week))].sort((a, b) => a - b),
+    [games]
+  )
+
+  const filteredGames = useMemo(
+    () => games.filter(game => game.week === selectedWeek),
+    [games, selectedWeek]
+  )
 
   useEffect(() => {
     async function fetchTeamNameMap(){
