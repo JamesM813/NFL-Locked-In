@@ -228,7 +228,7 @@ export default function GroupDash() {
 
   const handleInviteMembersClick = () => {
     if (!userInGroupData?.groups) return;
-    handleInviteMembers(userInGroupData.is_admin || false, userInGroupData.groups.group_size);
+    handleInviteMembers(userInGroupData.is_admin || false, groupSize);
   };
 
   const handleLeaveGroupClick = () => {

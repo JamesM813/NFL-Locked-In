@@ -4,6 +4,7 @@ import type { profileData } from "@/utils/types"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Camera, X, Upload, Pencil, Check } from "lucide-react"
 import { Dialog } from "@headlessui/react"
+import { toast } from "react-hot-toast"
 
 const PRESET_AVATAR_URLS = [1, 2, 3, 4, 5, 6, 7].map((i) =>
   supabase
@@ -66,7 +67,7 @@ export default function Profile() {
       setIsEditingUsername(false)
     } catch (err) {
       console.error("Error updating username:", err)
-      alert("Failed to update username. Please try again.")
+      toast.error("Failed to update username. Please try again.")
     }
   }
 
@@ -103,7 +104,7 @@ export default function Profile() {
 
       setUserData(prev => prev ? { ...prev, profile_picture_url: publicUrl } : null)
     } catch (e) {
-      alert("Error uploading image")
+      toast.error("Error uploading image")
       console.error(e)
     } finally {
       setUploading(false)
