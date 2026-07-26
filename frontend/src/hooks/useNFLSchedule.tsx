@@ -1,5 +1,5 @@
 /*eslint-disable*/
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { NFLTeam, Selection } from '@/utils/types';
 
@@ -37,6 +37,29 @@ export function useNFLSchedule(season: number) {
   useEffect(() => {
     fetchNFLData();
   }, [fetchNFLData]);
+
+  const refetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`nfl-schedule-${season}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'nfl_schedule', filter: `season=eq.${season}` },
+        () => {
+          // The scraper upserts a whole week of games at once; debounce so a
+          // burst of events triggers a single refetch.
+          if (refetchTimer.current) clearTimeout(refetchTimer.current);
+          refetchTimer.current = setTimeout(() => fetchNFLData(), 1000);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      if (refetchTimer.current) clearTimeout(refetchTimer.current);
+      supabase.removeChannel(channel);
+    };
+  }, [season, fetchNFLData]);
 
   const getAvailableTeamsForUserWeek = useCallback(
     (week: number, userSelections: Selection[]) => {

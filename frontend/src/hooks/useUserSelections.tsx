@@ -1,5 +1,5 @@
 /*eslint-disable*/
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { GroupMember, Selection } from '@/utils/types';
 
@@ -109,6 +109,32 @@ export function useUserSelections(
   useEffect(() => {
     fetchGroupSelections();
   }, [fetchGroupSelections]);
+
+  const refetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`user-picks-group-${groupId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_picks', filter: `group_id=eq.${groupId}` },
+        () => {
+          // The scoring cron updates many picks at once; debounce so a burst
+          // of events triggers a single refetch.
+          if (refetchTimer.current) clearTimeout(refetchTimer.current);
+          refetchTimer.current = setTimeout(() => {
+            fetchUserSelections();
+            fetchGroupSelections();
+          }, 1000);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      if (refetchTimer.current) clearTimeout(refetchTimer.current);
+      supabase.removeChannel(channel);
+    };
+  }, [groupId, fetchUserSelections, fetchGroupSelections]);
 
   return { selections, setSelections, groupSelections, fetchUserSelections, fetchGroupSelections };
 }
