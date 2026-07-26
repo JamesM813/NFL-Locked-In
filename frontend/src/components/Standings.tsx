@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import type { GroupMember } from '@/utils/types';
 
 interface StandingsProps {
@@ -7,7 +7,7 @@ interface StandingsProps {
   memberScores?: { [key: string]: number };
 }
 
-export function Standings({ loading, groupMembers, memberScores = {} }: StandingsProps) {
+export const Standings = memo(function Standings({ loading, groupMembers, memberScores = {} }: StandingsProps) {
   const sortedMembers = useMemo(
     () => [...groupMembers].sort((a, b) => {
       const scoreA = memberScores[a.user_id] || 0;
@@ -57,4 +57,4 @@ export function Standings({ loading, groupMembers, memberScores = {} }: Standing
       </div>
     </div>
   );
-}
+});

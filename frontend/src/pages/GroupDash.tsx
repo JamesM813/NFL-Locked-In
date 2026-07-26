@@ -1,6 +1,6 @@
 import { useGroup } from "@/context/GroupContext";
 import { useSeason } from "@/context/SeasonContext";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "react-hot-toast";
@@ -20,6 +20,48 @@ const PRESET_GROUP_AVATARS = [1, 2, 3, 4].map((i) =>
     .from("preset-group-avatars")
     .getPublicUrl(`avatar-${i}.png`).data.publicUrl
 );
+
+const getStatusIcon = (status: 'correct' | 'incorrect' | 'pending') => {
+  switch (status) {
+    case 'correct':
+      return (
+        <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      );
+    case 'incorrect':
+      return (
+        <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
+      );
+    default:
+      return (
+        <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      );
+  }
+};
+
+const INITIAL_LEAVE_GROUP_STATE = {
+  isModalOpen: false,
+  confirmationText: "",
+  isLeaving: false,
+  message: ""
+};
+
+const INITIAL_SETTINGS_FORM = {
+  groupName: '',
+  isPublic: false,
+  profilePictureUrl: ''
+};
 
 export default function GroupDash() {
   const nav = useNavigate();
@@ -47,9 +89,7 @@ export default function GroupDash() {
     selections,
     groupSelections,
     setSelections,
-    fetchNFLTeams,
-    fetchGroupMembers,
-    fetchInitialData,
+    fetchUserSelections,
     fetchGroupSelections,
     getAvailableTeamsForUserWeek
   } = useGroupData(groupId, viewingSeason, userInGroupData?.user_id);
@@ -84,18 +124,13 @@ export default function GroupDash() {
   };
 
   
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showTeamSelector, setShowTeamSelector] = useState<{ [key: number]: boolean }>({});
   const [selectedWeek, setSelectedWeek] = useState(currentWeek);
-  const [leaveGroupMessage, setLeaveGroupMessage] = useState("");
-  const [showLeaveModal, setShowLeaveModal] = useState(false);
-  const [confirmationText, setConfirmationText] = useState("");
-  const [isLeavingGroup, setIsLeavingGroup] = useState(false);
   const [groupSize, setGroupSize] = useState(0);
-  const [settingsForm, setSettingsForm] = useState({
-    groupName: '',
-    isPublic: false,
-    profilePictureUrl: ''
+  const [leaveGroup, setLeaveGroup] = useState(INITIAL_LEAVE_GROUP_STATE);
+  const [settingsModal, setSettingsModal] = useState({
+    isOpen: false,
+    form: INITIAL_SETTINGS_FORM
   });
 
 
@@ -166,34 +201,18 @@ export default function GroupDash() {
   }
   fetchGroupSize()
   }, [groupId])
-  useEffect(() => {
-    fetchNFLTeams();
-  }, [fetchNFLTeams]);
-
-  useEffect(() => {
-    fetchGroupMembers();
-  }, [groupId, fetchGroupMembers]);
-
-  useEffect(() => {
-    if (userInGroupData?.user_id) {
-      fetchInitialData();
-    }
-  }, [groupId, userInGroupData?.user_id, fetchInitialData]);
-
-  useEffect(() => {
-    if (groupMembers.length > 0) {
-      fetchGroupSelections();
-    }
-  }, [groupMembers, fetchGroupSelections]);
 
   useEffect(() => {
     if (userInGroupData?.groups) {
       const group = userInGroupData.groups;
-      setSettingsForm({
-        groupName: group.name || '',
-        isPublic: group.is_public || false,
-        profilePictureUrl: group.group_picture_url || ''
-      });
+      setSettingsModal(prev => ({
+        ...prev,
+        form: {
+          groupName: group.name || '',
+          isPublic: group.is_public || false,
+          profilePictureUrl: group.group_picture_url || ''
+        }
+      }));
     }
   }, [userInGroupData]);
 
@@ -202,7 +221,7 @@ export default function GroupDash() {
       toast.error("You do not have permission to change group settings! Ask your group's admin to do this.");
       return;
     }
-    setShowSettingsModal(true);
+    setSettingsModal(prev => ({ ...prev, isOpen: true }));
   };
 
   const handleInviteMembersClick = () => {
@@ -214,31 +233,31 @@ export default function GroupDash() {
     if (userInGroupData?.is_admin) {
       toast.error("You need to transfer admin rights before leaving the group.");
     } else {
-      setShowLeaveModal(true);
+      setLeaveGroup(prev => ({ ...prev, isModalOpen: true }));
     }
   };
 
   const handleConfirmLeaveGroup = async () => {
-    if (confirmationText !== "LEAVE GROUP") return;
-    
-    setIsLeavingGroup(true);
+    if (leaveGroup.confirmationText !== "LEAVE GROUP") return;
+
+    setLeaveGroup(prev => ({ ...prev, isLeaving: true }));
     const message = await handleLeaveGroup(userInGroupData?.user_id || '');
-    setLeaveGroupMessage(message);
-    setShowLeaveModal(false);
-    setIsLeavingGroup(false);
-    setConfirmationText("");
+    setLeaveGroup({ ...INITIAL_LEAVE_GROUP_STATE, message });
   };
 
   const handleCloseLeaveModal = () => {
-    setShowLeaveModal(false);
-    setConfirmationText("");
+    setLeaveGroup(prev => ({ ...prev, isModalOpen: false, confirmationText: "" }));
   };
 
-  const toggleTeamSelector = (week: number) => {
+  const handleConfirmationTextChange = (text: string) => {
+    setLeaveGroup(prev => ({ ...prev, confirmationText: text }));
+  };
+
+  const toggleTeamSelector = useCallback((week: number) => {
     setShowTeamSelector(prev => ({ ...prev, [week]: !prev[week] }));
-  };
+  }, []);
 
-  const handleTeamSelection = async (week: number, teamId: string | null) => {
+  const handleTeamSelection = useCallback(async (week: number, teamId: string | null) => {
     if (!isCurrentSeason) return;
 
     setSelections(prev => prev.map(selection =>
@@ -307,22 +326,22 @@ export default function GroupDash() {
           position: "top-center",
         });
       }
-      await Promise.all([fetchInitialData(), fetchGroupSelections()]);
+      await Promise.all([fetchUserSelections(), fetchGroupSelections()]);
 
     } catch (error) {
       console.error("Update failed:", error);
-      setSelections(prev => prev.map(selection => 
-        selection.week === week 
-          ? { ...selection, teamId: selection.teamId === teamId ? null : selection.teamId } 
+      setSelections(prev => prev.map(selection =>
+        selection.week === week
+          ? { ...selection, teamId: selection.teamId === teamId ? null : selection.teamId }
           : selection
       ));
-       
+
       toast.error(`Failed to update pick. Have you used this team before?`, {
         duration: 3000,
         position: "top-center",
       });
     }
-  };
+  }, [isCurrentSeason, currentSeason, groupId, userInGroupData?.user_id, setSelections, fetchUserSelections, fetchGroupSelections]);
  
   const handleSelectPresetAvatar = async (presetUrl: string): Promise<void> => {
     try {
@@ -334,7 +353,7 @@ export default function GroupDash() {
       if (error) throw error;
 
 
-      setSettingsForm(prev => ({ ...prev, profilePictureUrl: presetUrl }));
+      setSettingsModal(prev => ({ ...prev, form: { ...prev.form, profilePictureUrl: presetUrl } }));
       
 
       await refetchGroups();
@@ -378,39 +397,10 @@ export default function GroupDash() {
     }
   };
 
-  const getStatusIcon = (status: 'correct' | 'incorrect' | 'pending') => {
-    switch (status) {
-      case 'correct':
-        return (
-          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-        );
-      case 'incorrect':
-        return (
-          <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </div>
-        );
-      default:
-        return (
-          <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-        );
-    }
-  };
-
-  const getSelectedTeam = (teamId: string | null) => {
+  const getSelectedTeam = useCallback((teamId: string | null) => {
     if (!teamId) return null;
     return nflTeams.find(t => t.id === teamId) || null;
-  };
+  }, [nflTeams]);
 
   if (!userInGroupData) {
     return (
@@ -437,9 +427,9 @@ export default function GroupDash() {
           onLeaveGroup={handleLeaveGroupClick}
         />
 
-        {leaveGroupMessage && (
+        {leaveGroup.message && (
           <div className="bg-blue-600/20 border border-blue-600/30 p-4 rounded-xl">
-            <p className="text-blue-200">{leaveGroupMessage}</p>
+            <p className="text-blue-200">{leaveGroup.message}</p>
           </div>
         )}
 
@@ -497,10 +487,10 @@ export default function GroupDash() {
         />
 
         <SettingsModal
-          isOpen={showSettingsModal}
+          isOpen={settingsModal.isOpen}
           isSubmitting={isSubmittingSettings}
-          initialSettings={settingsForm}
-          onClose={() => setShowSettingsModal(false)}
+          initialSettings={settingsModal.form}
+          onClose={() => setSettingsModal(prev => ({ ...prev, isOpen: false }))}
           onSubmit={handleSubmitSettings}
           onSelectPresetAvatar={handleSelectPresetAvatar}
           onUploadProfilePicture={handleUploadProfilePicture}
@@ -509,11 +499,11 @@ export default function GroupDash() {
         />
 
         <LeaveGroupModal
-          isOpen={showLeaveModal}
-          isLeaving={isLeavingGroup}
+          isOpen={leaveGroup.isModalOpen}
+          isLeaving={leaveGroup.isLeaving}
           groupName={groupName}
-          confirmationText={confirmationText}
-          onConfirmationChange={setConfirmationText}
+          confirmationText={leaveGroup.confirmationText}
+          onConfirmationChange={handleConfirmationTextChange}
           onClose={handleCloseLeaveModal}
           onConfirm={handleConfirmLeaveGroup}
         />

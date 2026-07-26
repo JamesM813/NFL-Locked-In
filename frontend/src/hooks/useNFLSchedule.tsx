@@ -1,0 +1,69 @@
+/*eslint-disable*/
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import type { NFLTeam, Selection } from '@/utils/types';
+
+export function useNFLSchedule(season: number) {
+  const [nflTeams, setNFLTeams] = useState<NFLTeam[]>([]);
+  const [nflSchedule, setNFLSchedule] = useState<any[]>([]);
+
+  const fetchNFLData = useCallback(async () => {
+    try {
+      const [teamsResult, scheduleResult] = await Promise.all([
+        supabase.from("nfl_teams").select("*"),
+        supabase.from("nfl_schedule").select("week, home_team_id, away_team_id, locks_at").eq("season", season)
+      ]);
+
+      if (teamsResult.error) throw new Error(`Error fetching NFL teams: ${teamsResult.error.message}`);
+      if (scheduleResult.error) throw new Error(`Error fetching NFL schedule: ${scheduleResult.error.message}`);
+
+      if (teamsResult.data) {
+        const teams = teamsResult.data.map((team: any) => ({
+          id: team.id,
+          logo_url: team.logo_url,
+          name: team.name
+        }));
+        setNFLTeams(teams);
+      }
+
+      if (scheduleResult.data) {
+        setNFLSchedule(scheduleResult.data);
+      }
+    } catch (error) {
+      console.error("Error fetching NFL data:", error);
+    }
+  }, [season]);
+
+  useEffect(() => {
+    fetchNFLData();
+  }, [fetchNFLData]);
+
+  const getAvailableTeamsForUserWeek = useCallback(
+    (week: number, userSelections: Selection[]) => {
+      const currentTime = new Date();
+      const weekGames = nflSchedule.filter((game) => game.week === week);
+
+      const usedTeamIds = userSelections
+        .filter((sel) => sel.teamId !== null && sel.week < week)
+        .map((sel) => sel.teamId);
+
+      const filteredTeams = nflTeams.filter((team) => {
+        const teamGame = weekGames.find(
+          (game) => game.home_team_id === team.id || game.away_team_id === team.id
+        );
+        if (!teamGame) return false;
+
+        if (new Date(teamGame.locks_at) <= currentTime) return false;
+
+        if (usedTeamIds.includes(team.id)) return false;
+
+        return true;
+      });
+
+      return filteredTeams;
+    },
+    [nflTeams, nflSchedule]
+  );
+
+  return { nflTeams, nflSchedule, fetchNFLData, getAvailableTeamsForUserWeek };
+}

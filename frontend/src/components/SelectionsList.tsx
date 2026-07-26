@@ -14,6 +14,9 @@ interface SelectionsListProps {
   readOnly?: boolean;
 }
 
+// Stable reference so memoized SelectionCards with a collapsed selector don't see a new [] each render
+const NO_TEAMS: NFLTeam[] = [];
+
 export function SelectionsList({
   selections,
   currentWeek,
@@ -43,7 +46,7 @@ export function SelectionsList({
         {selections.map((selection) => {
           const selectedTeam = getSelectedTeam(selection.teamId);
           const isExpanded = showTeamSelector[selection.week] || false;
-          const availableTeams = availableTeamsByWeek.get(selection.week) ?? [];
+          const availableTeams = availableTeamsByWeek.get(selection.week) ?? NO_TEAMS;
 
           return (
             <SelectionCard

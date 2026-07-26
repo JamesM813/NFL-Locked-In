@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import type { Selection, NFLTeam } from '@/utils/types';
 
 interface SelectionCardProps {
@@ -13,7 +13,7 @@ interface SelectionCardProps {
   readOnly?: boolean;
 }
 
-export function SelectionCard({
+export const SelectionCard = memo(function SelectionCard({
   selection,
   currentWeek,
   selectedTeam,
@@ -206,4 +206,4 @@ export function SelectionCard({
       )}
     </div>
   );
-}
+});
