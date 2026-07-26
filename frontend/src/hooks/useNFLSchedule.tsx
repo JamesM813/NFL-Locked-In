@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { getAvailableTeamsForWeek } from '@/utils/availableTeams';
 import type { NFLTeam, ScheduleGame, Selection } from '@/utils/types';
 
 export function useNFLSchedule(season: number) {
@@ -61,29 +62,8 @@ export function useNFLSchedule(season: number) {
   }, [season, fetchNFLData]);
 
   const getAvailableTeamsForUserWeek = useCallback(
-    (week: number, userSelections: Selection[]) => {
-      const currentTime = new Date();
-      const weekGames = nflSchedule.filter((game) => game.week === week);
-
-      const usedTeamIds = userSelections
-        .filter((sel) => sel.teamId !== null && sel.week < week)
-        .map((sel) => sel.teamId);
-
-      const filteredTeams = nflTeams.filter((team) => {
-        const teamGame = weekGames.find(
-          (game) => game.home_team_id === team.id || game.away_team_id === team.id
-        );
-        if (!teamGame) return false;
-
-        if (new Date(teamGame.locks_at) <= currentTime) return false;
-
-        if (usedTeamIds.includes(team.id)) return false;
-
-        return true;
-      });
-
-      return filteredTeams;
-    },
+    (week: number, userSelections: Selection[]) =>
+      getAvailableTeamsForWeek(nflTeams, nflSchedule, week, userSelections),
     [nflTeams, nflSchedule]
   );
 

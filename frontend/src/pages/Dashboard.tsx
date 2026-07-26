@@ -1,5 +1,5 @@
-import { useProfile } from "@/context/ProfileContext"
-import { useGroup } from "@/context/GroupContext"
+import { useProfile } from "@/context/SessionContext"
+import { useGroup } from "@/context/SessionContext"
 import type { profileGroupData } from "@/utils/types"
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
@@ -20,7 +20,7 @@ export default function Dashboard() {
   const groupContext = useGroup()
   const navigator = useNavigate()
 
-  if (!groupContext) throw new Error("useGroup must be used within a GroupProvider")
+  if (!groupContext) throw new Error("useGroup must be used within a SessionProvider")
   if (!profileContext) throw new Error("useProfile must be used within a ProfileProvider")
   const { profile, refetchProfiles } = profileContext
   const { groups, refetchGroups } = groupContext 

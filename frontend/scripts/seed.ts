@@ -1,4 +1,4 @@
-import {supabase} from './supabase-node'
+import {supabase} from './supabase-admin'
 
 interface Team {
   id: string

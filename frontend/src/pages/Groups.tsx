@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
-import { useGroup } from "@/context/GroupContext"
-import { useProfile } from "@/context/ProfileContext"
+import { useGroup } from "@/context/SessionContext"
+import { useProfile } from "@/context/SessionContext"
 import { Plus, X } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/lib/supabase"
@@ -11,7 +11,7 @@ export default function Groups() {
 
   const groupContext = useGroup()
   const profileContext = useProfile()
-  if (!groupContext) { throw new Error("useGroup must be used within a GroupProvider")}
+  if (!groupContext) { throw new Error("useGroup must be used within a SessionProvider")}
   if (!profileContext) { throw new Error("useProfile must be used within a ProfileProvider")}
   const { groups, refetchGroups } = groupContext
   const { profile, refetchProfiles } = profileContext

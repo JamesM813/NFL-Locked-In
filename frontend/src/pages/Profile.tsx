@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import type { profileData } from "@/utils/types"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Camera, X, Upload, Pencil, Check } from "lucide-react"
-import { Dialog } from "@headlessui/react"
+import { Camera, X, Pencil, Check } from "lucide-react"
+import { AvatarPicker } from "@/components/AvatarPicker"
 import { toast } from "react-hot-toast"
 
 const PRESET_AVATAR_URLS = [1, 2, 3, 4, 5, 6, 7].map((i) =>
@@ -18,10 +18,8 @@ export default function Profile() {
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null)
   const [isEditingUsername, setIsEditingUsername] = useState(false)
   const [newUsername, setNewUsername] = useState("")
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     async function fetchUserData() {
@@ -51,7 +49,7 @@ export default function Profile() {
     }
     fetchUserData()
   }, [])
-  
+
   const handleUsernameSave = async () => {
     if (!userData || !newUsername.trim()) return
 
@@ -112,12 +110,6 @@ export default function Profile() {
     }
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      uploadAvatar(e.target.files[0])
-    }
-  }
-
   const handlePresetClick = async (presetUrl: string) => {
     if (!userData) return
 
@@ -143,7 +135,7 @@ export default function Profile() {
           <CardContent className="space-y-6">
 
             <div className="flex flex-col items-center mb-6">
-              <div 
+              <div
                 className="relative group w-32 h-32 mb-2 cursor-pointer"
                 onClick={() => setIsModalOpen(true)}
               >
@@ -227,130 +219,16 @@ export default function Profile() {
         </Card>
       </div>
 
-      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="relative z-50">
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity duration-300" aria-hidden="true" />
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="bg-gradient-to-br from-gray-800 via-gray-900 to-black p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-2xl border border-white/10 w-full max-w-md mx-4 transform transition-all duration-300 scale-100">
-            <div className="flex items-center justify-between mb-6 md:mb-8">
-              <Dialog.Title className="text-white text-xl md:text-2xl font-light tracking-tight">
-                Choose Avatar
-              </Dialog.Title>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-white transition-colors p-1 md:p-2 rounded-full hover:bg-white/10"
-              >
-                <X className="w-5 h-5 md:w-6 md:h-6" />
-              </button>
-            </div>
-
-            <div className="flex justify-center mb-6 md:mb-8">
-              <div className="relative">
-                <img
-                  src={selectedAvatar || userData?.profile_picture_url || 'default-avatar.png'}
-                  alt="Current avatar"
-                  className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white/20 object-cover shadow-xl"
-                />
-                <div className="absolute inset-0 w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-t from-black/20 to-transparent"></div>
-              </div>
-            </div>
-
-            <div className="space-y-3 md:space-y-4">
-              <div className="grid grid-cols-4 gap-3 md:gap-4">
-                {[1, 2, 3, 4].map((i) => {
-                  const presetUrl = PRESET_AVATAR_URLS[i - 1]
-                  const isSelected = selectedAvatar === presetUrl || userData?.profile_picture_url === presetUrl
-                  return (
-                    <div
-                      key={i}
-                      onClick={() => {
-                        setSelectedAvatar(presetUrl)
-                        handlePresetClick(presetUrl)
-                      }}
-                      className={`relative w-14 h-14 md:w-20 md:h-20 rounded-xl md:rounded-2xl cursor-pointer overflow-hidden group transition-all duration-300 hover:scale-105 ${
-                        isSelected 
-                          ? "ring-3 md:ring-4 ring-blue-500 shadow-lg shadow-blue-500/25" 
-                          : "ring-1 md:ring-2 ring-white/10 hover:ring-white/30"
-                      }`}
-                    >
-                      <img 
-                        src={presetUrl} 
-                        alt={`Avatar ${i}`} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
-                      />
-                      {isSelected && (
-                        <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                         
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="grid grid-cols-4 gap-3 md:gap-4">
-                {[5, 6, 7].map((i) => {
-                  const presetUrl = PRESET_AVATAR_URLS[i - 1]
-                  const isSelected = selectedAvatar === presetUrl || userData?.profile_picture_url === presetUrl
-                  return (
-                    <div
-                      key={i}
-                      onClick={() => {
-                        setSelectedAvatar(presetUrl)
-                        handlePresetClick(presetUrl)
-                      }}
-                      className={`relative w-14 h-14 md:w-20 md:h-20 rounded-xl md:rounded-2xl cursor-pointer overflow-hidden group transition-all duration-300 hover:scale-105 ${
-                        isSelected 
-                          ? "ring-3 md:ring-4 ring-blue-500 shadow-lg shadow-blue-500/25" 
-                          : "ring-1 md:ring-2 ring-white/10 hover:ring-white/30"
-                      }`}
-                    >
-                      <img 
-                        src={presetUrl} 
-                        alt={`Avatar ${i}`} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
-                      />
-                      {isSelected && (
-                        <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                          
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    </div>
-                  )
-                })}
-                
-                <label className="relative w-14 h-14 md:w-20 md:h-20 rounded-xl md:rounded-2xl cursor-pointer bg-gradient-to-br from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 flex flex-col items-center justify-center border-2 border-dashed border-white/30 hover:border-white/50 transition-all duration-300 hover:scale-105 group">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    ref={fileInputRef}
-                  />
-                  {uploading ? (
-                    <div className="flex flex-col items-center">
-                      <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mb-1"></div>
-                      <span className="text-xs text-white/70">Uploading...</span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center">
-                      <Upload className="w-4 h-4 md:w-6 md:h-6 text-white/70 group-hover:text-white transition-colors mb-1" />
-                      <span className="text-xs text-white/70 group-hover:text-white transition-colors">Upload</span>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl md:rounded-2xl"></div>
-                </label>
-              </div>
-            </div>
-
-            <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-white/10">
-              <p className="text-center text-xs md:text-sm text-gray-400">
-                Choose from presets or upload your own image
-              </p>
-            </div>
-          </Dialog.Panel>
-        </div>
-      </Dialog>
+      <AvatarPicker
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        currentAvatarUrl={userData?.profile_picture_url}
+        fallbackAvatarUrl="default-avatar.png"
+        presetAvatars={PRESET_AVATAR_URLS}
+        uploading={uploading}
+        onSelectPreset={handlePresetClick}
+        onUploadFile={uploadAvatar}
+      />
     </div>
   )
 }

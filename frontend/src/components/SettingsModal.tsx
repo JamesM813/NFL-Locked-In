@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { AvatarPicker } from './AvatarPicker';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -39,7 +40,6 @@ export function SettingsModal({
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setForm(initialSettings);
@@ -82,12 +82,6 @@ export function SettingsModal({
     } finally {
       setUploadingAvatar(false);
       setShowAvatarModal(false);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      uploadAvatar(e.target.files[0]);
     }
   };
 
@@ -138,100 +132,16 @@ export function SettingsModal({
 
   if (showAvatarModal) {
     return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300">
-        <div className="bg-gradient-to-br from-gray-800 via-gray-900 to-black p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-2xl border border-white/10 w-full max-w-md mx-4 transform transition-all duration-300 scale-100">
-          <div className="flex items-center justify-between mb-6 md:mb-8">
-            <h3 className="text-white text-xl md:text-2xl font-light tracking-tight">
-              Choose Avatar
-            </h3>
-            <button
-              onClick={() => setShowAvatarModal(false)}
-              className="text-gray-400 hover:text-white transition-colors p-1 md:p-2 rounded-full hover:bg-white/10"
-            >
-              <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="flex justify-center mb-6 md:mb-8">
-            <div className="relative">
-              <img
-                src={selectedAvatar || form.profilePictureUrl || '/default-group-avatar.png'}
-                alt="Current avatar"
-                className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white/20 object-cover shadow-xl"
-              />
-              <div className="absolute inset-0 w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-t from-black/20 to-transparent"></div>
-            </div>
-          </div>
-
-          <div className="space-y-3 md:space-y-4">
-            {presetAvatars.length > 0 && (
-              <div className="grid grid-cols-4 gap-3 md:gap-4">
-                {presetAvatars.map((presetUrl, i) => {
-                  const isSelected = selectedAvatar === presetUrl || form.profilePictureUrl === presetUrl;
-                  return (
-                    <div
-                      key={i}
-                      onClick={() => handlePresetClick(presetUrl)}
-                      className={`relative w-14 h-14 md:w-20 md:h-20 rounded-xl md:rounded-2xl cursor-pointer overflow-hidden group transition-all duration-300 hover:scale-105 ${
-                        isSelected 
-                          ? "ring-3 md:ring-4 ring-blue-500 shadow-lg shadow-blue-500/25" 
-                          : "ring-1 md:ring-2 ring-white/10 hover:ring-white/30"
-                      }`}
-                    >
-                      <img 
-                        src={presetUrl} 
-                        alt={`Avatar ${i + 1}`} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
-                      />
-                      {isSelected && (
-                        <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {onUploadProfilePicture && (
-              <div className="flex justify-center">
-                <label className="relative w-20 h-20 md:w-24 md:h-24 rounded-xl md:rounded-2xl cursor-pointer bg-gradient-to-br from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 flex flex-col items-center justify-center border-2 border-dashed border-white/30 hover:border-white/50 transition-all duration-300 hover:scale-105 group">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    ref={fileInputRef}
-                  />
-                  {uploadingAvatar ? (
-                    <div className="flex flex-col items-center">
-                      <div className="w-5 h-5 md:w-6 md:h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mb-1"></div>
-                      <span className="text-xs text-white/70">Uploading...</span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center">
-                      <svg className="w-6 h-6 md:w-8 md:h-8 text-white/70 group-hover:text-white transition-colors mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                      </svg>
-                      <span className="text-xs text-white/70 group-hover:text-white transition-colors">Upload</span>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl md:rounded-2xl"></div>
-                </label>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-white/10">
-            <p className="text-center text-xs md:text-sm text-gray-400">
-              {presetAvatars.length > 0 ? "Choose from presets or upload your own image" : "Upload a custom image for your group"}
-            </p>
-          </div>
-        </div>
-      </div>
+      <AvatarPicker
+        isOpen
+        onClose={() => setShowAvatarModal(false)}
+        currentAvatarUrl={selectedAvatar || form.profilePictureUrl}
+        fallbackAvatarUrl="/default-group-avatar.png"
+        presetAvatars={presetAvatars}
+        uploading={uploadingAvatar}
+        onSelectPreset={handlePresetClick}
+        onUploadFile={onUploadProfilePicture ? uploadAvatar : undefined}
+      />
     );
   }
 

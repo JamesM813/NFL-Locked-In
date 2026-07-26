@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
-import { useGroup } from "@/context/GroupContext";
+import { useGroup } from "@/context/SessionContext";
 
 export default function CreateGroup() {
   const [groupName, setGroupName] = useState("");
@@ -12,7 +12,7 @@ export default function CreateGroup() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const groupContext = useGroup()
-  if (!groupContext) { throw new Error("useGroup must be used within a GroupProvider")}
+  if (!groupContext) { throw new Error("useGroup must be used within a SessionProvider")}
   const { refetchGroups } = groupContext
 
   const handleSubmit = async (e: React.FormEvent) => {

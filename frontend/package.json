@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "seed": "tsx ./src/lib/seeding.ts"
+    "seed": "tsx ./scripts/seed.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",
