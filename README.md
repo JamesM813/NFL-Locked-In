@@ -67,3 +67,42 @@ This stack keeps the project lightweight, maintainable, and easy to extend with 
 5. Explore
     From there, you can explore other scripts like seeding and schedule cron jobs to get the site fully up and running.
     Any questions can be sent to myself at jrm803@gmail.com and I'll help as best as I can.
+
+## Developer Reference
+
+All commands run from the `frontend/` directory.
+
+### Environment variables
+
+Create `frontend/.env` with:
+
+| Variable | Used by | Where to find it |
+|---|---|---|
+| `VITE_SUPABASE_URL` | app + scripts | Supabase dashboard → Project Settings → API |
+| `VITE_SUPABASE_ANON_KEY` | app | same page, `anon` `public` key |
+| `SUPABASE_SERVICE_ROLE_KEY` | `npm run seed` only | same page, `service_role` key — **never** prefix with `VITE_`, or Vite may bundle it into public browser JS |
+
+### Seeding the NFL schedule
+
+```bash
+NFL_SEASON=2026 npm run seed   # defaults to 2025 when NFL_SEASON is unset
+```
+
+Fetches the season schedule from the ESPN API and upserts it into `nfl_schedule`. Requires `SUPABASE_SERVICE_ROLE_KEY` (see above).
+
+### Tests
+
+```bash
+npm test             # run unit tests once (Vitest)
+npm run test:watch   # watch mode
+```
+
+Unit tests cover the core business logic: standings scoring (`utils/scoring.ts`) and weekly team availability (`utils/availableTeams.ts`).
+
+### Database types
+
+```bash
+npm run gen:types    # writes src/utils/database.types.ts
+```
+
+Generates TypeScript types from the live Supabase schema (requires the Supabase CLI to be logged in: `npx supabase login`). Regenerate after schema migrations to catch schema/code mismatches at compile time.

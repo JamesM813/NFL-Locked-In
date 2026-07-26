@@ -1,3 +1,12 @@
+// Seeds the nfl_schedule table from the ESPN scoreboard API.
+//
+// Usage (from frontend/):  NFL_SEASON=<year> npm run seed
+//
+// Required environment (frontend/.env or shell):
+//   VITE_SUPABASE_URL (or SUPABASE_URL) — project URL
+//   SUPABASE_SERVICE_ROLE_KEY          — service_role key (dashboard →
+//                                        Project Settings → API); writes
+//                                        bypass RLS, so the anon key won't work
 import {supabase} from './supabase-admin'
 
 interface Team {
