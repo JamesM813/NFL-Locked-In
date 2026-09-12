@@ -157,11 +157,52 @@ it, set the same value in two places:
 
 ### Season rollover
 
-`app_config.current_season` is the single source of truth. Update that one row
-and both edge functions plus the frontend pick it up — `nfl_schedule` and
-`user_picks` are season-scoped, and the "one pick per week / each team once"
-constraints apply per season, so past seasons stay intact and viewable
-read-only.
+`app_config.current_season` is the single source of truth. Both edge functions
+and the frontend read it — `nfl_schedule` and `user_picks` are season-scoped,
+and the "one pick per week / each team once" constraints apply per season, so
+past seasons stay intact and viewable read-only.
+
+There is **no code path that advances the season**; it is a manual procedure.
+Seed the new season *before* activating it, never the other way round — the
+frontend filters every query on season, so a season that is active but unseeded
+shows an empty app to everyone.
+
+1. **Seed first.** `test-fetch` reads `?year=` ahead of the config, so this
+   writes the new schedule while the app is still on the old season:
+
+   ```bash
+   curl -X POST "$SUPABASE_URL/functions/v1/test-fetch?year=2027" \
+     -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+     -H "x-cron-secret: $CRON_SECRET"
+   ```
+
+   Check the response reports a non-zero `gamesUpdated` and `errors: 0`.
+
+2. **Verify** before activating — 272 rows across 18 weeks, no null
+   `locks_at`, and every team mapped:
+
+   ```sql
+   select season, count(*), count(distinct week),
+          count(*) filter (where locks_at is null) as missing_locks
+   from nfl_schedule where season = 2027 group by season;
+   ```
+
+3. **Confirm the previous season finished scoring** (`status = 'pending'`
+   should be zero), so nothing is lost:
+
+   ```sql
+   select season, count(*) filter (where status = 'pending') as pending
+   from user_picks group by season;
+   ```
+
+4. **Activate.**
+
+   ```sql
+   update app_config set value = '2027' where key = 'current_season';
+   ```
+
+5. **Confirm** the fetcher and scorer both report the new season in their logs
+   on their next run.
 
 ### Deployment
 
