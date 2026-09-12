@@ -13,6 +13,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret"
 };
 
+// ESPN rejects Deno's default agent (and browser-impersonating ones) with 403,
+// so identify the caller honestly. Verified from Supabase egress: the default
+// Deno/x.y.z agent and a Chrome string both 403, this one returns 200.
+const ESPN_HEADERS = { "User-Agent": "NFL-Locked-In/1.0" };
+
 interface Team {
   id: string
   name: string
@@ -120,7 +125,7 @@ serve(async (req) => {
       console.log(`Fetching week ${week}...`)
 
       try {
-        const response = await fetch(`${BASE_URL}${week}`)
+        const response = await fetch(`${BASE_URL}${week}`, { headers: ESPN_HEADERS })
         if(!response.ok) {
           console.error(`Failed to fetch week ${week}: ${response.status} ${response.statusText}`)
           totalErrors++;
@@ -254,6 +259,18 @@ serve(async (req) => {
     }
 
     console.log('Final summary:', summary);
+
+    // Every requested week failed: report it as an error status. Returning 200
+    // here made a total outage look like a successful run to the GitHub
+    // workflow, which only inspects the status code.
+    const totalFailure = totalProcessed === 0 && totalErrors >= weeksToFetch.length;
+    if (totalFailure) {
+      return jsonResponse({
+        ...summary,
+        message: `All ${weeksToFetch.length} requested weeks failed to fetch`
+      }, 502);
+    }
+
     return jsonResponse(summary);
 
   } catch (error) {

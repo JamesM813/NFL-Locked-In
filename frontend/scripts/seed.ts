@@ -9,6 +9,10 @@
 //                                        bypass RLS, so the anon key won't work
 import {supabase} from './supabase-admin'
 
+// ESPN 403s Node's default agent the same way it 403s Deno's; identify the
+// caller honestly or every week silently fails to fetch.
+const ESPN_HEADERS = { 'User-Agent': 'NFL-Locked-In/1.0' }
+
 interface Team {
   id: string
   name: string
@@ -68,7 +72,7 @@ async function fetchScheduleData(): Promise<void> {
   for(let week = 1; week <= 19; week++) {
     console.log(`Fetching week ${week}...`)
     
-    const response = await fetch(`${BASE_URL}${week}`)
+    const response = await fetch(`${BASE_URL}${week}`, { headers: ESPN_HEADERS })
     if(!response.ok) { 
       console.error(`Failed to fetch week ${week}`)
       continue

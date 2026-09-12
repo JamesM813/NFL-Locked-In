@@ -106,6 +106,34 @@ jobs:
           exit 1
         fi
 
+    - name: Run scoring cron
+      id: score_call
+      if: steps.season_check.outputs.in_season == 'true' && steps.api_call.outcome == 'success'
+      run: |
+        echo "Scoring finished games"
+
+        response=$(curl -w "\n%{http_code}" \
+          -L -X POST '${{ secrets.SUPABASE_URL }}/functions/v1/nfl-scraper' \
+          -H 'Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}' \
+          -H 'x-cron-secret: ${{ secrets.CRON_SECRET }}' \
+          -H 'Content-Type: application/json' \
+          --max-time 300 \
+          --retry 3 \
+          --retry-delay 10 \
+          --retry-max-time 600 \
+          --silent)
+
+        body=$(echo "$response" | head -n -1)
+        status_code=$(echo "$response" | tail -n 1)
+
+        echo "Scoring status: $status_code"
+        echo "Scoring body: $body"
+
+        if [[ "$status_code" -lt 200 || "$status_code" -ge 300 ]]; then
+          echo "Scoring call failed with status $status_code"
+          exit 1
+        fi
+
     - name: Handle API response
       if: steps.season_check.outputs.in_season == 'true' && steps.api_call.outcome == 'success'
       run: |

@@ -52,21 +52,33 @@ This stack keeps the project lightweight, maintainable, and easy to extend with 
 
 ## Getting Started (Development)
 
-1. Clone the repo:  
+1. Clone the repo:
    ```bash
    git clone https://github.com/JamesM813/NFL-Locked-In
-   cd NFL-Locked-In
-2. Install dependancies
-    ```bash
-    npm install
+   cd NFL-Locked-In/frontend
+   ```
+2. Install dependencies (all npm commands run from `frontend/`):
+   ```bash
+   npm install
+   ```
 3. Set up environment
-    Configure a Supabase project and add local environment variables to ```.env```
-4. Run the dev server
-    ```bash
-    npm run dev
-5. Explore
-    From there, you can explore other scripts like seeding and schedule cron jobs to get the site fully up and running.
-    Any questions can be sent to myself at jrm803@gmail.com and I'll help as best as I can.
+
+   Configure a Supabase project and create `frontend/.env` — see
+   [Environment variables](#environment-variables) below for the exact keys.
+4. Apply the database migrations:
+   ```bash
+   supabase db push
+   ```
+5. Run the dev server:
+   ```bash
+   npm run dev
+   ```
+6. Explore
+
+   From there, you can seed the schedule (`npm run seed`) and wire up the
+   cron jobs to get the site fully up and running — see
+   [Backend jobs](#backend-jobs). Any questions can be sent to myself at
+   jrm803@gmail.com and I'll help as best as I can.
 
 ## Developer Reference
 
@@ -106,3 +118,59 @@ npm run gen:types    # writes src/utils/database.types.ts
 ```
 
 Generates TypeScript types from the live Supabase schema (requires the Supabase CLI to be logged in: `npx supabase login`). Regenerate after schema migrations to catch schema/code mismatches at compile time.
+
+### Database migrations
+
+```bash
+supabase db push     # apply everything in supabase/migrations/
+```
+
+Migrations are **not** applied by the frontend deploy. In particular,
+`20260726000000_realtime_publication.sql` adds `user_picks` and `nfl_schedule`
+to the `supabase_realtime` publication — without it the live-updating standings
+and picks silently never fire, because `postgres_changes` subscriptions only
+receive events for published tables.
+
+### Backend jobs
+
+Two Deno edge functions live in `supabase/functions/`. Note that the directory
+names differ from the deployed function names:
+
+| Directory | Deployed as | Role |
+|---|---|---|
+| `test-fetch/` | `test-fetch` | Fetches the ESPN scoreboard and upserts games into `nfl_schedule` |
+| `NFL-Scraper/` | `nfl-scraper` | Scores finished games' picks, splitting points among duplicate picks |
+
+`.github/workflows/nfl-data-fetch.yml` calls `test-fetch` hourly, and every 15
+minutes on Sundays, Mondays, and Thursdays, during Sep–Feb.
+
+Deploy them with `supabase functions deploy` — this is separate from the
+frontend deploy, so the repo can drift from what is actually running.
+
+**`CRON_SECRET`**: both functions accept an `x-cron-secret` header and reject
+mismatches with a 401. The check *fails open with a warning when the secret is
+unset*, so an unconfigured deploy is unprotected rather than broken. To enable
+it, set the same value in two places:
+
+- the function environment (`supabase secrets set CRON_SECRET=…`)
+- the repository's GitHub Actions secrets, as `CRON_SECRET`
+
+### Season rollover
+
+`app_config.current_season` is the single source of truth. Update that one row
+and both edge functions plus the frontend pick it up — `nfl_schedule` and
+`user_picks` are season-scoped, and the "one pick per week / each team once"
+constraints apply per season, so past seasons stay intact and viewable
+read-only.
+
+### Deployment
+
+The frontend deploys to Vercel from GitHub `main`. To confirm the live site is
+current:
+
+```bash
+git fetch origin && git log --oneline origin/main..main
+```
+
+Empty output means everything is pushed. Remember that migrations and edge
+functions deploy on their own tracks (above).
