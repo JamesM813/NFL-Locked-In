@@ -92,11 +92,34 @@ serve(async (req)=>{
   console.log(`Running scoring cron — Test Mode: ${testMode}`);
   try {
     // 0. Determine the current season (single source of truth in app_config)
-    const { data: seasonConfig, error: seasonError } = await supabaseClient.from("app_config").select("value").eq("key", "current_season").single();
-    if (seasonError) {
-      console.error("Error fetching current season from app_config:", seasonError);
+    // This read fails intermittently with a Gateway Timeout. It used to fall
+    // back to 2025 silently, which meant a timeout made the cron score the
+    // WRONG SEASON rather than fail. Retry, then abort: skipping one cycle is
+    // recoverable, scoring the wrong season is not.
+    let seasonConfig = null;
+    let seasonError = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const result = await supabaseClient.from("app_config").select("value").eq("key", "current_season").single();
+      seasonConfig = result.data;
+      seasonError = result.error;
+      if (!seasonError && seasonConfig?.value) break;
+      console.warn(`app_config read attempt ${attempt}/3 failed:`, seasonError?.message ?? "no value returned");
+      if (attempt < 3) await new Promise((r) => setTimeout(r, attempt * 500));
     }
-    const SEASON = parseInt(seasonConfig?.value ?? Deno.env.get("NFL_SEASON") ?? "2025");
+
+    if (seasonError || !seasonConfig?.value) {
+      console.error("Could not read current_season after 3 attempts; aborting without scoring.", seasonError);
+      return jsonResponse({
+        error: "Could not determine current season",
+        detail: seasonError?.message ?? "app_config returned no value"
+      }, 503);
+    }
+
+    const SEASON = parseInt(seasonConfig.value);
+    if (!Number.isInteger(SEASON) || SEASON < 2000 || SEASON > 2100) {
+      console.error(`Refusing to score implausible season value: ${seasonConfig.value}`);
+      return jsonResponse({ error: `Invalid current_season: ${seasonConfig.value}` }, 500);
+    }
     console.log(`Scoring season ${SEASON}`);
     // 1. Fetch finished games (skip winner check in test mode)
     let gamesQuery = supabaseClient.from("nfl_schedule").select("api_game_id, week, winner_id, status").eq("season", SEASON);

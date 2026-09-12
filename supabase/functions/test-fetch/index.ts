@@ -67,15 +67,32 @@ serve(async (req) => {
   let year = url.searchParams.get("year");
 
   if (!year) {
-    const { data: config, error: configError } = await supabase
-      .from("app_config")
-      .select("value")
-      .eq("key", "current_season")
-      .single();
-    if (configError) {
-      console.error("Error fetching current season from app_config:", configError);
+    // Retry rather than fall back: this read fails intermittently with a
+    // Gateway Timeout, and a silent 2025 default would refetch last season
+    // over the current one.
+    let config = null;
+    let configError = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const result = await supabase
+        .from("app_config")
+        .select("value")
+        .eq("key", "current_season")
+        .single();
+      config = result.data;
+      configError = result.error;
+      if (!configError && config?.value) break;
+      console.warn(`app_config read attempt ${attempt}/3 failed:`, configError?.message ?? "no value returned");
+      if (attempt < 3) await new Promise((r) => setTimeout(r, attempt * 500));
     }
-    year = config?.value ?? "2025";
+
+    if (configError || !config?.value) {
+      console.error("Could not read current_season after 3 attempts; aborting.", configError);
+      return jsonResponse({
+        error: "Could not determine current season",
+        detail: configError?.message ?? "app_config returned no value"
+      }, 503);
+    }
+    year = config.value;
   }
 
   console.log(`Fetching ESPN schedule data - Year: ${year}, Week: ${specificWeek || "all"}, Test Mode: ${testMode}`);

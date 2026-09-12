@@ -31,9 +31,13 @@ jobs:
       id: season_check
       run: |
 
-        current_month=$(date +%m)
-        current_day=$(date +%d)
-        
+        # 10# forces base 10: date gives zero-padded months, and bash reads
+        # a leading zero as octal, so "08" and "09" are invalid octal and the
+        # comparison errors out. That silently made every August and September
+        # run decide it was not NFL season and skip the fetch entirely.
+        current_month=$((10#$(date +%m)))
+        current_day=$((10#$(date +%d)))
+
         if [[ ($current_month -ge 9) || ($current_month -le 2) ]] || [[ "${{ github.event.inputs.force_run }}" == "true" ]]; then
           echo "in_season=true" >> $GITHUB_OUTPUT
           echo "NFL season is active (or forced)"
