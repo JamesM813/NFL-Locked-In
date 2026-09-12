@@ -28,7 +28,28 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false)
   const [news, setNews] = useState<{id: string, title: string, source: string, time: string, type: string, image: string, url: string}[]>([])
 
+  // Newest first — this renders in array order into a scrolling panel.
   const changelog = [
+    {
+      version: "v2.0.0",
+      date: "2026-09-12T18:00:00",
+      type: "release",
+      changes: [
+        "The 2026 season is live — week 1 is open for picks",
+        "Multiple seasons: your 2025 picks, scores and standings are kept and stay viewable",
+        "Use the season selector on a group to look back at a past season (read-only)",
+        "Team usage resets each season, so every team is available again in 2026",
+        "Fixed the schedule and scoring updates, which had stopped refreshing",
+      ]
+    },
+    {
+      version: "v1.0.1",
+      date: "2025-09-03T14:35:00",
+      type: "fix",
+      changes: [
+        "Fixed issue with used teams not being removed from selection list",
+      ]
+    },
     {
       version: "v1.0.0",
       date: "2025-08-22T14:35:00",
@@ -36,14 +57,6 @@ export default function Dashboard() {
       changes: [
         "Initial 2025 release",
         "Core gameplay functionality",
-      ]
-    },
-        {
-      version: "v1.0.1",
-      date: "2025-09-03T14:35:00",
-      type: "fix",
-      changes: [
-        "Fixed issue with used teams not being removed from selection list",
       ]
     },
   ]
